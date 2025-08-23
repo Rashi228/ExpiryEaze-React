@@ -4,6 +4,7 @@ import { Star, ShoppingCart, Search, MapPin, Building, CalendarCheck2, MessageCi
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import ReviewSection from '../components/ReviewSection';
+import { config } from '../lib/config';
 
 const PLACEHOLDER = 'https://via.placeholder.com/300x200.png?text=No+Image';
 
@@ -30,7 +31,7 @@ const UserDashboard = () => {
     async function fetchProducts() {
       setLoading(true);
       try {
-        const res = await axios.get('http://localhost:5001/api/v1/products');
+        const res = await axios.get(`${config.API_URL}/products`);
         if (res.data.success) {
           setProducts(res.data.data.filter((p) => p.category === 'groceries'));
         }
@@ -47,7 +48,7 @@ const UserDashboard = () => {
     async function fetchVendors() {
       setVendorsLoading(true);
       try {
-        const res = await axios.get('http://localhost:5001/api/v1/vendors/all-with-products');
+        const res = await axios.get(`${config.API_URL}/vendors/all-with-products`);
         if (res.data.success) {
           setVendors(res.data.data);
         }

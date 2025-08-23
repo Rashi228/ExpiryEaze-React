@@ -2,6 +2,7 @@ import React, { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import axios from 'axios';
+import { config } from '../lib/config';
 import { PlusCircle, Edit, Trash2, Eye, Menu, AlertCircle } from 'lucide-react';
 import VendorProfileSidebar from '../components/VendorProfileSidebar';
 
@@ -26,8 +27,7 @@ const VendorDashboard = () => {
     setLoading(true);
     setError(null);
     try {
-      const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:5001/api/v1';
-      const res = await axios.get(`${apiUrl}/products`);
+      const res = await axios.get(`${config.API_URL}/products`);
       
       if (res.data.success) {
         const vendorProducts = res.data.data.filter((product) => {
@@ -59,8 +59,7 @@ const VendorDashboard = () => {
       setProfileLoading(true);
       try {
         const token = localStorage.getItem('token');
-        const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:5001/api/v1';
-        const res = await axios.get(`${apiUrl}/vendors/profile`, { 
+        const res = await axios.get(`${config.API_URL}/vendors/profile`, { 
           headers: { Authorization: `Bearer ${token}` } 
         });
         setProfile(res.data.profile);
@@ -82,8 +81,7 @@ const VendorDashboard = () => {
   const confirmDelete = async () => {
     if (!productToDelete) return;
     try {
-      const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:5001/api/v1';
-      await axios.delete(`${apiUrl}/products/${productToDelete._id}`);
+      await axios.delete(`${config.API_URL}/products/${productToDelete._id}`);
       setProducts(products.filter(p => p._id !== productToDelete._id));
     } catch (err) {
       setError('Failed to delete product.');
@@ -160,8 +158,7 @@ const VendorDashboard = () => {
         const fetchProfile = async () => {
           try {
             const token = localStorage.getItem('token');
-            const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:5001/api/v1';
-            const res = await axios.get(`${apiUrl}/vendors/profile`, { headers: { Authorization: `Bearer ${token}` } });
+            const res = await axios.get(`${config.API_URL}/vendors/profile`, { headers: { Authorization: `Bearer ${token}` } });
             setProfile(res.data.profile);
           } catch (err) {
             setProfileError('Failed to load profile');

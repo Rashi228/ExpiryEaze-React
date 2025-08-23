@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useCart } from '../contexts/CartContext';
 import axios from 'axios';
+import { config } from '../lib/config';
 import { Star, Heart, CalendarCheck2, MapPin, Building, Search, Filter, ShoppingCart } from 'lucide-react';
 
 const PLACEHOLDER = 'https://via.placeholder.com/300x200.png?text=No+Image';
@@ -34,8 +35,7 @@ const UserMedicinesDashboard = () => {
         setLoading(true);
         setError(null);
         try {
-            const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:5001/api/v1';
-            const res = await axios.get(`${apiUrl}/products`);
+            const res = await axios.get(`${config.API_URL}/products`);
             if (res.data.success) {
                 const fetchedMedicines = res.data.data.filter((p) => p.category === 'medicines');
                 setMedicines(fetchedMedicines);
@@ -52,8 +52,7 @@ const UserMedicinesDashboard = () => {
     const fetchVendors = async () => {
         setVendorsLoading(true);
         try {
-            const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:5001/api/v1';
-            const res = await axios.get(`${apiUrl}/vendors/all-with-products`);
+            const res = await axios.get(`${config.API_URL}/vendors/all-with-products`);
             if (res.data.success) {
                 // Filter vendors who have medicines
                 const medicineVendors = res.data.data.filter(vendorData => 

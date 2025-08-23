@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useCart } from '../contexts/CartContext';
 import axios from 'axios';
+import { config } from '../lib/config';
 import { Star, Heart, CalendarCheck2, MapPin, Building, Search, ArrowLeft, Eye, Filter, Trash2 } from 'lucide-react';
 import VendorProfileSidebar from '../components/VendorProfileSidebar';
 
@@ -37,8 +38,7 @@ const MedicinesDashboard = () => {
             setLoading(true);
             setError(null);
             try {
-                const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:5001/api/v1';
-                const res = await axios.get(`${apiUrl}/products`);
+                const res = await axios.get(`${config.API_URL}/products`);
                 if (res.data.success) {
                     const fetchedMedicines = res.data.data.filter((p) => p.category === 'medicines');
                     setMedicines(fetchedMedicines);
@@ -63,8 +63,7 @@ const MedicinesDashboard = () => {
         setProfileLoading(true);
         try {
             const token = localStorage.getItem('token');
-            const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:5001/api/v1';
-            const res = await axios.get(`${apiUrl}/vendors/profile`, { 
+            const res = await axios.get(`${config.API_URL}/vendors/profile`, { 
                 headers: { Authorization: `Bearer ${token}` } 
             });
             setProfile(res.data.profile);
@@ -79,8 +78,7 @@ const MedicinesDashboard = () => {
         setProductsLoading(true);
         try {
             const token = localStorage.getItem('token');
-            const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:5001/api/v1';
-            const res = await axios.get(`${apiUrl}/products/vendor`, { 
+            const res = await axios.get(`${config.API_URL}/products/vendor`, { 
                 headers: { Authorization: `Bearer ${token}` } 
             });
             setProducts(res.data.products || []);

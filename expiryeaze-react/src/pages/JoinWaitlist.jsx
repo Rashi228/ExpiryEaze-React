@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import axios from 'axios';
+import { config } from '../lib/config';
 
 const JoinWaitlist = () => {
   const navigate = useNavigate();
@@ -70,8 +71,7 @@ const JoinWaitlist = () => {
     }
 
     try {
-      const apiUrl = process.env.REACT_APP_API_URL;
-      const res = await axios.post(`${apiUrl}/auth/waitlist`, {
+      const res = await axios.post(`${config.API_URL}/auth/waitlist`, {
         ...formData,
         phone: phoneDigits, // Use the cleaned phone number
         role: selectedRole,

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Star, X, Upload, Trash2 } from 'lucide-react';
 import axios from 'axios';
+import { config } from '../lib/config';
 
 const ReviewModal = ({ isOpen, onClose, vendorId, vendorName, onReviewSubmit, existingReview = null }) => {
   const [rating, setRating] = useState(existingReview?.rating || 0);
@@ -11,7 +12,7 @@ const ReviewModal = ({ isOpen, onClose, vendorId, vendorName, onReviewSubmit, ex
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
 
-  const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5001/api/v1';
+  const API_URL = config.API_URL;
 
   useEffect(() => {
     if (existingReview) {

@@ -4,6 +4,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useCart } from '../contexts/CartContext';
 import { Star, ShoppingCart, Search, MapPin, Building, CalendarCheck2 } from 'lucide-react';
 import axios from 'axios';
+import { config } from '../lib/config';
 
 const PLACEHOLDER = 'https://via.placeholder.com/300x200?text=No+Image';
 
@@ -27,7 +28,7 @@ const Dashboard = () => {
     async function fetchAllProducts() {
       setLoading(true);
       try {
-        const res = await axios.get('http://localhost:5001/api/v1/products');
+        const res = await axios.get(`${config.API_URL}/products`);
         if (res.data.success) {
           setAllProducts(res.data.data);
         }

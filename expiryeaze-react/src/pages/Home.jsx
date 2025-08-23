@@ -17,11 +17,9 @@ const Home = () => {
   const handleDashboardClick = () => {
     if (!user) {
       navigate('/signup');
-    } else if (user.role === 'vendor') {
-      navigate('/vendor-dashboard');
     } else {
-      // For users without role or with user role, go to user dashboard
-      navigate('/user-dashboard');
+      // Redirect to simple dashboard for all users
+      navigate('/dashboard');
     }
   };
 

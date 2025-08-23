@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import axios from 'axios';
+import { config } from '../lib/config';
 
 const ProductContext = createContext({
   products: [],
@@ -25,8 +26,7 @@ export const ProductProvider = ({ children }) => {
       setLoading(true);
       setError(null);
       try {
-        const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:5001/api/v1';
-        const response = await axios.get(`${apiUrl}/products`);
+        const response = await axios.get(`${config.API_URL}/products`);
         // Map backend product fields to frontend structure if needed
         const mappedProducts = response.data.data.map((p) => ({
           id: p._id,

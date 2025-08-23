@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
+import { config } from '../lib/config';
 import { Edit, Save, UserCircle, X, Maximize2, Minimize2 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useToast } from "../hooks/use-toast.js";
@@ -46,8 +47,7 @@ const VendorProfileSidebar = ({ isOpen, onOpenChange, onProfileUpdated }) => {
     setError('');
     try {
       const token = localStorage.getItem('token');
-      const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:5001/api/v1';
-      const res = await axios.get(`${apiUrl}/vendors/profile`, { 
+      const res = await axios.get(`${config.API_URL}/vendors/profile`, { 
         headers: { Authorization: `Bearer ${token}` } 
       });
       setProfile(res.data.profile);
@@ -85,14 +85,13 @@ const VendorProfileSidebar = ({ isOpen, onOpenChange, onProfileUpdated }) => {
     setError('');
     try {
       const token = localStorage.getItem('token');
-      const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:5001/api/v1';
       const payload = { ...form };
       if (!payload.profileImage) delete payload.profileImage;
       let res;
       if (profileExists) {
-        res = await axios.put(`${apiUrl}/vendors/profile`, payload, { headers: { Authorization: `Bearer ${token}` } });
+        res = await axios.put(`${config.API_URL}/vendors/profile`, payload, { headers: { Authorization: `Bearer ${token}` } });
       } else {
-        res = await axios.post(`${apiUrl}/vendors/profile`, payload, { headers: { Authorization: `Bearer ${token}` } });
+        res = await axios.post(`${config.API_URL}/vendors/profile`, payload, { headers: { Authorization: `Bearer ${token}` } });
       }
       console.log('Profile save response:', res.data);
       if (res.data && res.data.profile) {

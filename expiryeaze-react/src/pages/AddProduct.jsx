@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import axios from 'axios';
+import { config } from '../lib/config';
 import { useAuth } from '../contexts/AuthContext';
 import ImageUpload from '../components/ImageUpload';
 
@@ -32,8 +33,7 @@ const AddProduct = () => {
       const fetchProduct = async () => {
         setLoading(true);
         try {
-          const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:5001/api/v1';
-          const res = await axios.get(`${apiUrl}/products/${id}`);
+          const res = await axios.get(`${config.API_URL}/products/${id}`);
           const existingProduct = res.data.data;
           if (existingProduct) {
             setProduct({
@@ -90,11 +90,10 @@ const AddProduct = () => {
     };
 
     try {
-      const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:5001/api/v1';
       if (isEditMode) {
-        await axios.put(`${apiUrl}/products/${id}`, productData);
+        await axios.put(`${config.API_URL}/products/${id}`, productData);
       } else {
-        await axios.post(`${apiUrl}/products`, productData);
+        await axios.post(`${config.API_URL}/products`, productData);
       }
       navigate('/vendor-dashboard');
     } catch (err) {

@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import axios from 'axios';
+import { config } from '../lib/config';
 import { useAuth } from './AuthContext';
 
 const CartContext = createContext(undefined);
@@ -17,7 +18,7 @@ export const CartProvider = ({ children }) => {
   const [cartItems, setCartItems] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5001/api/v1';
+  const API_URL = config.API_URL;
 
   const fetchCart = async () => {
     if (!user) return;

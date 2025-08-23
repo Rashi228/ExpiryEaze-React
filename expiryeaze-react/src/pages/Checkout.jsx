@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useCart } from '../contexts/CartContext';
 import axios from 'axios';
+import { config } from '../lib/config';
 
 const Checkout = () => {
   const navigate = useNavigate();
@@ -35,8 +36,7 @@ const Checkout = () => {
       
       const subtotal = cartItems.reduce((sum, item) => sum + item.product.price * item.quantity, 0);
 
-      const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:5001/api/v1';
-      await axios.post(`${apiUrl}/orders`, {
+      await axios.post(`${config.API_URL}/orders`, {
         orderItems,
         shippingAddress: shippingInfo,
         totalPrice: subtotal,

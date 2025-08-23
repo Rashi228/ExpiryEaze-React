@@ -1,9 +1,10 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import axios from 'axios';
+import { config } from '../lib/config';
 
 // Axios instance to automatically add the auth token
 const api = axios.create({
-  baseURL: process.env.REACT_APP_API_URL || 'http://localhost:5001/api/v1',
+  baseURL: config.API_URL,
 });
 
 api.interceptors.request.use(config => {

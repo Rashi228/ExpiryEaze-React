@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import { config } from '../lib/config';
 
 const MedicineVendorVerification = () => {
   const navigate = useNavigate();
@@ -44,7 +45,6 @@ const MedicineVendorVerification = () => {
 
     try {
       const token = localStorage.getItem('token');
-      const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:5001/api/v1';
       
       // Get user ID from token or localStorage
       const user = JSON.parse(localStorage.getItem('user') || '{}');
@@ -57,7 +57,7 @@ const MedicineVendorVerification = () => {
         documentUrl: '' // Optional field
       };
 
-      const res = await axios.post(`${apiUrl}/vendors/medicine-auth`, verificationData, {
+      const res = await axios.post(`${config.API_URL}/vendors/medicine-auth`, verificationData, {
         headers: { Authorization: `Bearer ${token}` }
       });
 

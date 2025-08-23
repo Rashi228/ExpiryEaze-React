@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Star, ThumbsUp, MessageCircle, Edit, Trash2, Plus } from 'lucide-react';
 import axios from 'axios';
+import { config } from '../lib/config';
 import ReviewModal from './ReviewModal';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -18,7 +19,7 @@ const ReviewSection = ({ vendorId, vendorName }) => {
   const [currentPage, setCurrentPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
 
-  const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5001/api/v1';
+  const API_URL = config.API_URL;
 
   useEffect(() => {
     if (vendorId) {

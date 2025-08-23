@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import { config } from '../lib/config';
 
 const VendorCategorySelection = () => {
   const navigate = useNavigate();
@@ -10,8 +11,7 @@ const VendorCategorySelection = () => {
   const checkMedicineVerification = async () => {
     try {
       const token = localStorage.getItem('token');
-      const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:5001/api/v1';
-      const res = await axios.get(`${apiUrl}/vendors/medicine-verification-status`, { 
+      const res = await axios.get(`${config.API_URL}/vendors/medicine-verification-status`, { 
         headers: { Authorization: `Bearer ${token}` } 
       });
       return res.data.isVerified;
