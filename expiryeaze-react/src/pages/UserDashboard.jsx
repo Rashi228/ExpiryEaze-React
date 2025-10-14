@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { useCart } from '../contexts/CartContext';
-import { Star, ShoppingCart, Search, MapPin, Building, CalendarCheck2, MessageCircle } from 'lucide-react';
+import { Star, ShoppingCart, Search, MapPin, Building, CalendarCheck2, MessageCircle, Package } from 'lucide-react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import ReviewSection from '../components/ReviewSection';
@@ -9,13 +9,14 @@ import { config } from '../lib/config';
 const PLACEHOLDER = 'https://via.placeholder.com/300x200.png?text=No+Image';
 
 const UserDashboard = () => {
-  const { cartItems, addToCart } = useCart();
+  const { cartItems, addToCart, updateQuantity } = useCart();
   const [products, setProducts] = useState([]);
   const [wishlist, setWishlist] = useState([]);
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [carouselIndex, setCarouselIndex] = useState(0);
   const [selectedCity, setSelectedCity] = useState('all');
+  const [selectedVendorId, setSelectedVendorId] = useState('all');
   const [loading, setLoading] = useState(true);
   const [notification, setNotification] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
@@ -26,6 +27,9 @@ const UserDashboard = () => {
   const [vendorsLoading, setVendorsLoading] = useState(false);
   const [expandedVendor, setExpandedVendor] = useState(null);
   const navigate = useNavigate();
+
+  // Local quantity state for products not yet in cart
+  const [quantities, setQuantities] = useState({});
 
   useEffect(() => {
     async function fetchProducts() {
@@ -64,7 +68,12 @@ const UserDashboard = () => {
   const filteredAndSortedProducts = useMemo(() => {
     let result = products
       .filter(p => p.name.toLowerCase().includes(searchTerm.toLowerCase()))
-      .filter(p => selectedCity === 'all' || p.city === selectedCity);
+      .filter(p => selectedCity === 'all' || p.city === selectedCity)
+      .filter(p => {
+        if (selectedVendorId === 'all') return true;
+        const productVendorId = (p.vendor && typeof p.vendor === 'object') ? p.vendor._id : p.vendor;
+        return productVendorId === selectedVendorId;
+      });
 
     switch (sortOrder) {
       case 'price_asc':
@@ -80,10 +89,29 @@ const UserDashboard = () => {
         result.sort((a, b) => a.name.localeCompare(b.name));
     }
     return result;
-  }, [products, searchTerm, selectedCity, sortOrder]);
+  }, [products, searchTerm, selectedCity, selectedVendorId, sortOrder]);
 
   const getCities = () => {
-    return ['all', ...Array.from(new Set(products.map(p => p.city)))];
+    // Predefined list of major Indian cities for filtering
+    const predefinedCities = [
+      'Mumbai', 'Delhi', 'Bangalore', 'Hyderabad', 'Chennai', 'Kolkata',
+      'Pune', 'Ahmedabad', 'Jaipur', 'Surat', 'Lucknow', 'Kanpur'
+    ];
+    
+    // Get cities from existing products
+    const productCities = Array.from(new Set(products.map(p => p.city).filter(city => city)));
+    
+    // Combine predefined cities with product cities and remove duplicates
+    const allCities = [...new Set([...predefinedCities, ...productCities])];
+    
+    return ['all', ...allCities.sort()];
+  };
+
+  const getVendors = () => {
+    return vendors.map(({ vendor }) => ({
+      id: vendor._id,
+      name: vendor.name
+    }));
   };
 
   const toggleWishlist = (productId) => {
@@ -105,14 +133,37 @@ const UserDashboard = () => {
     setSelectedProduct(null);
   };
 
-  const handleAddToCart = async (productId) => {
+  const handleAddToCart = async (productId, quantity = 1) => {
     try {
-      await addToCart(productId, 1);
+      await addToCart(productId, quantity);
       setNotification('Product added to cart successfully!');
       setTimeout(() => setNotification(''), 3000);
+      // Reset local quantity after add
+      setQuantities(prev => ({ ...prev, [productId]: 1 }));
     } catch (error) {
       setNotification('Failed to add product to cart.');
       setTimeout(() => setNotification(''), 3000);
+    }
+  };
+
+  // Quantity helpers (sync with cart when present)
+  const getQuantity = (productId) => {
+    const cartItem = cartItems.find(item => item.product && item.product._id === productId);
+    if (cartItem) return cartItem.quantity;
+    return quantities[productId] || 1;
+  };
+
+  const handleQuantityChange = (productId, change) => {
+    const cartItem = cartItems.find(item => item.product && item.product._id === productId);
+    if (cartItem) {
+      const newQty = Math.max(0, cartItem.quantity + change);
+      updateQuantity(cartItem._id || cartItem.id, newQty);
+    } else {
+      setQuantities(prev => {
+        const current = prev[productId] || 1;
+        const next = Math.max(1, current + change);
+        return { ...prev, [productId]: next };
+      });
     }
   };
 
@@ -145,21 +196,81 @@ const UserDashboard = () => {
         </button>
       </div>
 
-             {/* Tabs */}
-       <div className="mb-4 d-flex gap-2">
-         <button
-           className={`btn ${tab === 'products' ? 'btn-primary' : 'btn-outline-primary'}`}
-           onClick={() => setTab('products')}
-         >
-           Products
-         </button>
-         <button
-           className={`btn ${tab === 'vendors' ? 'btn-primary' : 'btn-outline-primary'}`}
-           onClick={() => setTab('vendors')}
-         >
-           Vendors
-         </button>
-       </div>
+      {/* Navigation Tabs */}
+      <div className="mb-4">
+        <div className="nav nav-pills bg-light rounded p-1" role="tablist">
+          <button 
+            className={`nav-link d-flex align-items-center gap-2 px-4 py-2 fw-semibold ${
+              tab === 'products' ? 'active' : ''
+            }`}
+            style={{
+              backgroundColor: tab === 'products' ? '#198754' : 'transparent',
+              color: tab === 'products' ? 'white' : '#6c757d',
+              border: 'none',
+              borderRadius: '8px',
+              transition: 'all 0.3s ease',
+              boxShadow: tab === 'products' ? '0 2px 4px rgba(0,0,0,0.1)' : 'none'
+            }}
+            onMouseEnter={(e) => {
+              if (tab !== 'products') {
+                e.target.style.backgroundColor = '#e9ecef';
+                e.target.style.color = '#198754';
+                e.target.style.transform = 'translateY(-1px)';
+              } else {
+                e.target.style.transform = 'translateY(-1px)';
+              }
+            }}
+            onMouseLeave={(e) => {
+              if (tab !== 'products') {
+                e.target.style.backgroundColor = 'transparent';
+                e.target.style.color = '#6c757d';
+                e.target.style.transform = 'translateY(0)';
+              } else {
+                e.target.style.transform = 'translateY(0)';
+              }
+            }}
+            onClick={() => setTab('products')}
+          >
+            <Package size={18} />
+            Products
+          </button>
+          <button 
+            className={`nav-link d-flex align-items-center gap-2 px-4 py-2 fw-semibold ${
+              tab === 'vendors' ? 'active' : ''
+            }`}
+            style={{
+              backgroundColor: tab === 'vendors' ? '#198754' : 'transparent',
+              color: tab === 'vendors' ? 'white' : '#6c757d',
+              border: 'none',
+              borderRadius: '8px',
+              transition: 'all 0.3s ease',
+              boxShadow: tab === 'vendors' ? '0 2px 4px rgba(0,0,0,0.1)' : 'none'
+            }}
+            onMouseEnter={(e) => {
+              if (tab !== 'vendors') {
+                e.target.style.backgroundColor = '#e9ecef';
+                e.target.style.color = '#198754';
+                e.target.style.transform = 'translateY(-1px)';
+              } else {
+                e.target.style.transform = 'translateY(-1px)';
+              }
+            }}
+            onMouseLeave={(e) => {
+              if (tab !== 'vendors') {
+                e.target.style.backgroundColor = 'transparent';
+                e.target.style.color = '#6c757d';
+                e.target.style.transform = 'translateY(0)';
+              } else {
+                e.target.style.transform = 'translateY(0)';
+              }
+            }}
+            onClick={() => setTab('vendors')}
+          >
+            <Building size={18} />
+            Vendors
+          </button>
+        </div>
+      </div>
 
       {/* Filters - Moved to top */}
       {tab === 'products' && (
@@ -179,6 +290,10 @@ const UserDashboard = () => {
               <option key="all-cities" value="all">All Cities</option>
               {getCities().map(city => <option key={city} value={city}>{city}</option>)}
             </select>
+            <select className="form-select" style={{width: 'auto'}} value={selectedVendorId} onChange={e => setSelectedVendorId(e.target.value)}>
+              <option key="all-vendors" value="all">All Vendors</option>
+              {getVendors().map(vendor => <option key={vendor.id} value={vendor.id}>{vendor.name}</option>)}
+            </select>
             <select className="form-select" style={{width: 'auto'}} value={sortOrder} onChange={e => setSortOrder(e.target.value)}>
               <option key="sort-name" value="name">Sort by Name</option>
               <option key="sort-price-asc" value="price_asc">Sort by Price (Low to High)</option>
@@ -186,6 +301,17 @@ const UserDashboard = () => {
               <option key="sort-expiry-asc" value="expiry_asc">Sort by Expiry (Soonest)</option>
             </select>
             <span className="text-muted fw-semibold">{filteredAndSortedProducts.length} found</span>
+            <button 
+              className="btn btn-outline-secondary btn-sm"
+              onClick={() => {
+                setSearchTerm('');
+                setSelectedCity('all');
+                setSelectedVendorId('all');
+                setSortOrder('name');
+              }}
+            >
+              Clear Filters
+            </button>
           </div>
         </div>
       )}
@@ -239,7 +365,8 @@ const UserDashboard = () => {
                            onClick={() => {
                              setSelectedVendor(vendor);
                              setTab('products');
-                             setSearchTerm(vendor.name);
+                             setSelectedVendorId(vendor._id);
+                             setSearchTerm(''); // Clear search term
                            }}
                          >
                            Browse Products
@@ -319,9 +446,30 @@ const UserDashboard = () => {
                     </div>
                     <div className="d-flex align-items-center text-muted small mb-3">
                       <Building size={14} className="me-1" />
-                      Vendor: {product.vendorName || 'N/A'}
+                      Vendor: {product?.vendor?.name || 'N/A'}
                     </div>
-                    <div className="mt-auto d-flex gap-2">
+                    <div className="mt-auto d-flex flex-column gap-2">
+                      {/* Quantity selector */}
+                      <div className="d-flex align-items-center justify-content-center gap-2">
+                        <button
+                          className="btn btn-outline-secondary btn-sm"
+                          onClick={() => handleQuantityChange(product._id, -1)}
+                          style={{ width: '32px', height: '32px', padding: 0 }}
+                        >
+                          -
+                        </button>
+                        <span className="fw-bold" style={{ minWidth: '30px', textAlign: 'center' }}>
+                          {getQuantity(product._id)}
+                        </span>
+                        <button
+                          className="btn btn-outline-secondary btn-sm"
+                          onClick={() => handleQuantityChange(product._id, 1)}
+                          style={{ width: '32px', height: '32px', padding: 0 }}
+                        >
+                          +
+                        </button>
+                      </div>
+                      <div className="d-flex gap-2">
                       <button 
                         className="btn btn-outline-primary btn-sm flex-grow-1"
                         onClick={() => openProductModal(product)}
@@ -329,11 +477,15 @@ const UserDashboard = () => {
                         View Details
                       </button>
                       <button 
-                        className="btn btn-success btn-sm flex-grow-1"
-                        onClick={() => handleAddToCart(product._id)}
+                        className={`btn btn-sm flex-grow-1 ${cartItems.some(ci => ci.product && ci.product._id === product._id) ? 'btn-secondary' : 'btn-success'}`}
+                        disabled={cartItems.some(ci => ci.product && ci.product._id === product._id)}
+                        onClick={() => handleAddToCart(product._id, getQuantity(product._id))}
                       >
-                        Buy
+                        {cartItems.some(ci => ci.product && ci.product._id === product._id)
+                          ? 'In Cart'
+                          : `Add ${getQuantity(product._id)} to Cart`}
                       </button>
+                      </div>
                     </div>
                   </div>
                 </div>

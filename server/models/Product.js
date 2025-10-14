@@ -21,6 +21,10 @@ const ProductSchema = new mongoose.Schema({
     type: String,
     required: [true, 'Please add a category'],
   },
+  requiresPrescription: {
+    type: Boolean,
+    default: false,
+  },
   expiryDate: {
     type: Date,
     required: [true, 'Please add an expiry date'],

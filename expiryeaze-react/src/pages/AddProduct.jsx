@@ -20,13 +20,56 @@ const AddProduct = () => {
     discountedPrice: '',
     stock: '',
     expiryDate: '',
-    category: 'groceries',
+    category: '',
+    requiresPrescription: false,
   });
   
   const [images, setImages] = useState([]);
   const [expiryPhoto, setExpiryPhoto] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [vendorSection, setVendorSection] = useState(null);
+  const [availableCategories, setAvailableCategories] = useState([]);
+
+  // Determine vendor section and available categories
+  useEffect(() => {
+    const storedVendorCategory = localStorage.getItem('vendorCategory');
+    setVendorSection(storedVendorCategory);
+    
+    if (storedVendorCategory === 'groceries') {
+      setAvailableCategories([
+        { value: 'groceries', label: 'Groceries' },
+        { value: 'dairy', label: 'Dairy' },
+        { value: 'bakery', label: 'Bakery' },
+        { value: 'beverages', label: 'Beverages' },
+        { value: 'snacks', label: 'Snacks' },
+        { value: 'fruits', label: 'Fruits' },
+        { value: 'vegetables', label: 'Vegetables' },
+        { value: 'meat', label: 'Meat & Poultry' },
+        { value: 'seafood', label: 'Seafood' },
+        { value: 'frozen', label: 'Frozen Foods' },
+        { value: 'canned', label: 'Canned Foods' },
+        { value: 'condiments', label: 'Condiments & Spices' }
+      ]);
+      setProduct(prev => ({ ...prev, category: 'groceries' }));
+    } else if (storedVendorCategory === 'medicines') {
+      setAvailableCategories([
+        { value: 'medicines', label: 'Medicines' },
+        { value: 'prescription', label: 'Prescription Drugs' },
+        { value: 'otc', label: 'Over-the-Counter' },
+        { value: 'supplements', label: 'Supplements' },
+        { value: 'medical-devices', label: 'Medical Devices' },
+        { value: 'personal-care', label: 'Personal Care' },
+        { value: 'baby-care', label: 'Baby Care' },
+        { value: 'first-aid', label: 'First Aid' }
+      ]);
+      setProduct(prev => ({ ...prev, category: 'medicines' }));
+    } else {
+      // Fallback: if no vendor category is stored, redirect to category selection
+      console.warn('No vendor category found in localStorage. Redirecting to category selection.');
+      navigate('/vendor-category-selection');
+    }
+  }, [navigate]);
 
   useEffect(() => {
     if (isEditMode && id) {
@@ -44,6 +87,7 @@ const AddProduct = () => {
               stock: existingProduct.stock.toString(),
               expiryDate: new Date(existingProduct.expiryDate).toISOString().split('T')[0],
               category: existingProduct.category || 'groceries',
+              requiresPrescription: existingProduct.requiresPrescription || false,
             });
             if (existingProduct.images && existingProduct.images.length > 0) {
               setImages(existingProduct.images.map((imgUrl, index) => ({ id: `existing-${index}`, url: imgUrl, type: 'product', alt: 'product image' })));
@@ -63,8 +107,11 @@ const AddProduct = () => {
   }, [id, isEditMode]);
 
   const handleChange = (e) => {
-    const { name, value } = e.target;
-    setProduct(prev => ({ ...prev, [name]: value }));
+    const { name, value, type, checked } = e.target;
+    setProduct(prev => ({ 
+      ...prev, 
+      [name]: type === 'checkbox' ? checked : value 
+    }));
   };
 
   const handleSubmit = async (e) => {
@@ -87,6 +134,7 @@ const AddProduct = () => {
       discountedPrice: product.discountedPrice ? parseFloat(product.discountedPrice) : undefined,
       images: images.map(img => img.url),
       expiryPhoto: expiryPhoto,
+      requiresPrescription: (product.category === 'medicines' || product.category === 'prescription') ? product.requiresPrescription : false,
     };
 
     try {
@@ -95,7 +143,14 @@ const AddProduct = () => {
       } else {
         await axios.post(`${config.API_URL}/products`, productData);
       }
-      navigate('/vendor-dashboard');
+      
+      // Navigate to correct dashboard based on vendor section
+      const vendorSection = localStorage.getItem('vendorCategory');
+      if (vendorSection === 'medicines') {
+        navigate('/medicines-dashboard');
+      } else {
+        navigate('/vendor-dashboard');
+      }
     } catch (err) {
       setError('Failed to save product. Please check your inputs.');
       console.error(err);
@@ -123,9 +178,59 @@ const AddProduct = () => {
                 </div>
 
                 <div className="mb-3">
-                  <label htmlFor="category" className="form-label">Category</label>
-                  <input type="text" className="form-control" id="category" name="category" value="groceries" disabled />
+                  <label htmlFor="category" className="form-label">
+                    Category {vendorSection && (
+                      <span className="text-muted small">
+                        ({vendorSection === 'groceries' ? 'Groceries Section' : 'Medicines Section'})
+                      </span>
+                    )}
+                  </label>
+                  <select 
+                    className="form-select" 
+                    id="category" 
+                    name="category" 
+                    value={product.category} 
+                    onChange={handleChange}
+                    required
+                  >
+                    {availableCategories.map(category => (
+                      <option key={category.value} value={category.value}>
+                        {category.label}
+                      </option>
+                    ))}
+                  </select>
                 </div>
+
+                {/* Prescription Requirement for Medicines */}
+                {(product.category === 'medicines' || product.category === 'prescription') && (
+                  <div className="mb-3">
+                    <div className="card border-warning">
+                      <div className="card-body">
+                        <h6 className="card-title text-warning mb-3">
+                          <i className="fas fa-prescription-bottle-alt me-2"></i>
+                          Medicine Prescription Requirement
+                        </h6>
+                        <div className="form-check form-switch">
+                          <input
+                            className="form-check-input"
+                            type="checkbox"
+                            id="requiresPrescription"
+                            name="requiresPrescription"
+                            checked={product.requiresPrescription}
+                            onChange={handleChange}
+                          />
+                          <label className="form-check-label" htmlFor="requiresPrescription">
+                            <strong>This medicine requires a prescription</strong>
+                          </label>
+                        </div>
+                        <small className="text-muted d-block mt-2">
+                          If checked, users will be required to upload a valid prescription before purchasing this medicine.
+                          Our medical team will verify the prescription before approving the order.
+                        </small>
+                      </div>
+                    </div>
+                  </div>
+                )}
                 
                 <ImageUpload 
                   onImagesChange={setImages} 

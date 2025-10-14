@@ -43,35 +43,36 @@ const MedicineVendorVerification = () => {
     setIsSubmitting(true);
     setError(null);
 
+    // Validate required fields
+    const required = [
+      'businessName','licenseNumber','pharmacyLicense','businessAddress',
+      'contactPerson','phoneNumber','email','businessType','yearsInBusiness',
+      'certifications','storageFacility','temperatureControl','securityMeasures',
+      'insuranceProvider','insurancePolicyNumber','complianceOfficer','emergencyContact'
+    ];
+    for (const key of required) {
+      if (!String(formData[key] || '').trim()) {
+        setError('Please fill all required fields marked with *');
+        setIsSubmitting(false);
+        return;
+      }
+    }
+    if (!formData.termsAccepted) {
+      setError('You must accept the Terms and Privacy Policy');
+      setIsSubmitting(false);
+      return;
+    }
+
     try {
-      const token = localStorage.getItem('token');
-      
-      // Get user ID from token or localStorage
-      const user = JSON.parse(localStorage.getItem('user') || '{}');
-      const vendorId = user.id || user._id;
-      
-      // Submit verification data
-      const verificationData = {
-        pharmacyLicenseNumber: formData.pharmacyLicense,
-        businessName: formData.businessName,
-        documentUrl: '' // Optional field
-      };
-
-      const res = await axios.post(`${config.API_URL}/vendors/medicine-auth`, verificationData, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-
-      if (res.data.success) {
+      const res = await axios.post(`${config.API_URL}/vendors/verify`, formData);
+      if (res.data?.success) {
         setSuccess(true);
-        setTimeout(() => {
-          navigate('/medicines-dashboard');
-        }, 3000);
+        setTimeout(() => navigate('/medicines-dashboard'), 2000);
       } else {
-        setError('Verification submission failed. Please try again.');
+        setError(res.data?.error || 'Submission failed');
       }
     } catch (err) {
-      console.error('Verification error:', err);
-      setError(err.response?.data?.error || 'Verification submission failed. Please try again.');
+      setError(err.response?.data?.error || 'Submission failed');
     } finally {
       setIsSubmitting(false);
     }
@@ -116,6 +117,8 @@ const MedicineVendorVerification = () => {
               </h1>
             </div>
             <div className="card-body p-4">
+              {/* Testing banner removed */}
+              
               <div className="alert alert-warning mb-4">
                 <i className="fas fa-exclamation-triangle me-2"></i>
                 <strong>Important:</strong> Medicine vendors require additional verification for safety compliance. 

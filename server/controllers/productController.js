@@ -76,6 +76,18 @@ exports.updateProduct = async (req, res, next) => {
   }
 };
 
+// @desc      Get vendor's own products
+// @route     GET /api/v1/products/vendor
+// @access    Private (for vendors)
+exports.getVendorProducts = async (req, res, next) => {
+  try {
+    const products = await Product.find({ vendor: req.user.id }).populate('vendor', 'name');
+    res.status(200).json({ success: true, count: products.length, products: products });
+  } catch (err) {
+    res.status(400).json({ success: false, error: err.message });
+  }
+};
+
 // @desc      Delete a product
 // @route     DELETE /api/v1/products/:id
 // @access    Private (for vendors)

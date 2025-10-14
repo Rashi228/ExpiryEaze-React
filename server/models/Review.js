@@ -8,7 +8,7 @@ const reviewSchema = new mongoose.Schema({
   },
   vendor: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'Vendor',
+    ref: 'User',
     required: true
   },
   rating: {
@@ -100,33 +100,38 @@ reviewSchema.post('save', async function() {
   const Review = this.constructor;
   const stats = await Review.getAverageRating(this.vendor);
   
-  // Update vendor's rating stats
-  const Vendor = mongoose.model('Vendor');
-  await Vendor.findByIdAndUpdate(this.vendor, {
+  // Update vendor's rating stats (vendors are stored as Users with role 'vendor')
+  const User = mongoose.model('User');
+  await User.findByIdAndUpdate(this.vendor, {
     averageRating: stats.averageRating,
     numReviews: stats.numReviews,
     ratingDistribution: stats.ratingDistribution
   });
 });
 
-reviewSchema.post('findOneAndUpdate', async function() {
-  const Review = this.constructor;
-  const stats = await Review.getAverageRating(this.vendor);
-  
-  const Vendor = mongoose.model('Vendor');
-  await Vendor.findByIdAndUpdate(this.vendor, {
+reviewSchema.post('findOneAndUpdate', async function(doc) {
+  // In query middleware, `this` is the query; the updated document is `doc`
+  if (!doc) return;
+  const vendorId = doc.vendor;
+  if (!vendorId) return;
+  const Review = this.model;
+  const stats = await Review.getAverageRating(vendorId);
+  const User = mongoose.model('User');
+  await User.findByIdAndUpdate(vendorId, {
     averageRating: stats.averageRating,
     numReviews: stats.numReviews,
     ratingDistribution: stats.ratingDistribution
   });
 });
 
-reviewSchema.post('findOneAndDelete', async function() {
-  const Review = this.constructor;
-  const stats = await Review.getAverageRating(this.vendor);
-  
-  const Vendor = mongoose.model('Vendor');
-  await Vendor.findByIdAndUpdate(this.vendor, {
+reviewSchema.post('findOneAndDelete', async function(doc) {
+  if (!doc) return;
+  const vendorId = doc.vendor;
+  if (!vendorId) return;
+  const Review = this.model;
+  const stats = await Review.getAverageRating(vendorId);
+  const User = mongoose.model('User');
+  await User.findByIdAndUpdate(vendorId, {
     averageRating: stats.averageRating,
     numReviews: stats.numReviews,
     ratingDistribution: stats.ratingDistribution

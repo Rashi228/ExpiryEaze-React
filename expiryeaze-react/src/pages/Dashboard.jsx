@@ -2,7 +2,7 @@ import React, { useEffect, useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useCart } from '../contexts/CartContext';
-import { Star, ShoppingCart, Search, MapPin, Building, CalendarCheck2 } from 'lucide-react';
+import { Star, ShoppingCart, Search, MapPin, Building, CalendarCheck2, Plus, Minus } from 'lucide-react';
 import axios from 'axios';
 import { config } from '../lib/config';
 
@@ -10,7 +10,7 @@ const PLACEHOLDER = 'https://via.placeholder.com/300x200?text=No+Image';
 
 const Dashboard = () => {
   const { user } = useAuth();
-  const { cartItems, addToCart } = useCart();
+  const { cartItems, addToCart, updateQuantity } = useCart();
   const navigate = useNavigate();
   
   const [allProducts, setAllProducts] = useState([]);
@@ -23,6 +23,7 @@ const Dashboard = () => {
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [carouselIndex, setCarouselIndex] = useState(0);
+  const [quantities, setQuantities] = useState({});
 
   useEffect(() => {
     async function fetchAllProducts() {
@@ -64,14 +65,26 @@ const Dashboard = () => {
   }, [allProducts, searchTerm, selectedCategory, selectedCity, sortOrder]);
 
   const getCities = () => {
-    return ['all', ...Array.from(new Set(allProducts.map(p => p.city)))];
+    // Predefined list of major Indian cities for filtering
+    const predefinedCities = [
+      'Mumbai', 'Delhi', 'Bangalore', 'Hyderabad', 'Chennai', 'Kolkata',
+      'Pune', 'Ahmedabad', 'Jaipur', 'Surat', 'Lucknow', 'Kanpur'
+    ];
+    
+    // Get cities from existing products
+    const productCities = Array.from(new Set(allProducts.map(p => p.city).filter(city => city)));
+    
+    // Combine predefined cities with product cities and remove duplicates
+    const allCities = [...new Set([...predefinedCities, ...productCities])];
+    
+    return ['all', ...allCities.sort()];
   };
 
   const getCategories = () => {
     return ['all', ...Array.from(new Set(allProducts.map(p => p.category)))];
   };
 
-  const handleBuyClick = (productId) => {
+  const handleBuyClick = (productId, quantity = 1) => {
     // Check if user is signed in
     if (!user) {
       setNotification('Please sign in to purchase products!');
@@ -93,18 +106,48 @@ const Dashboard = () => {
     }
     
     // If user is signed in and has joined waitlist, add to cart
-    handleAddToCart(productId);
+    handleAddToCart(productId, quantity);
   };
 
-  const handleAddToCart = async (productId) => {
+  const handleAddToCart = async (productId, quantity = 1) => {
     try {
-      await addToCart(productId, 1);
-      setNotification('Product added to cart successfully!');
+      await addToCart(productId, quantity);
+      setNotification(`${quantity} item(s) added to cart successfully!`);
       setTimeout(() => setNotification(''), 3000);
+      // Reset quantity after adding to cart
+      setQuantities(prev => ({ ...prev, [productId]: 1 }));
     } catch (error) {
       setNotification('Failed to add product to cart.');
       setTimeout(() => setNotification(''), 3000);
     }
+  };
+
+  const handleQuantityChange = (productId, change) => {
+    // Check if item is in cart
+    const cartItem = cartItems.find(item => item.product && item.product._id === productId);
+    
+    if (cartItem) {
+      // If item is in cart, update cart quantity
+      const newQuantity = Math.max(0, cartItem.quantity + change);
+      updateQuantity(cartItem._id, newQuantity);
+    } else {
+      // If item is not in cart, update local quantity state
+      setQuantities(prev => {
+        const currentQuantity = prev[productId] || 1;
+        const newQuantity = Math.max(1, currentQuantity + change);
+        return { ...prev, [productId]: newQuantity };
+      });
+    }
+  };
+
+  const getQuantity = (productId) => {
+    // Check if item is in cart first
+    const cartItem = cartItems.find(item => item.product && item.product._id === productId);
+    if (cartItem) {
+      return cartItem.quantity;
+    }
+    // Otherwise return local quantity state
+    return quantities[productId] || 1;
   };
 
   const calculateDaysLeft = (expiryDate) => {
@@ -284,13 +327,25 @@ const Dashboard = () => {
                   
                   {/* Price */}
                   <div className="mb-3">
-                    <span className="fs-4 fw-bold text-success">
-                      ${(product.discountedPrice || product.price).toFixed(2)}
-                    </span>
-                    {product.discountedPrice && (
-                      <span className="ms-2 text-muted text-decoration-line-through">
-                        ${product.price.toFixed(2)}
+                    <div className="d-flex align-items-center gap-2">
+                      <span className="fs-4 fw-bold text-success">
+                        ${(product.discountedPrice || product.price).toFixed(2)}
                       </span>
+                      {product.discountedPrice && (
+                        <span className="text-muted text-decoration-line-through">
+                          ${product.price.toFixed(2)}
+                        </span>
+                      )}
+                    </div>
+                    {getQuantity(product._id) > 1 && (
+                      <div className="mt-1">
+                        <small className="text-muted">
+                          Total for {getQuantity(product._id)}: 
+                          <span className="fw-bold text-success ms-1">
+                            ${((product.discountedPrice || product.price) * getQuantity(product._id)).toFixed(2)}
+                          </span>
+                        </small>
+                      </div>
                     )}
                   </div>
 
@@ -298,6 +353,27 @@ const Dashboard = () => {
                   
                   {/* Action Buttons */}
                   <div className="mt-auto d-grid gap-2">
+                    {/* Quantity Selector */}
+                    <div className="d-flex align-items-center justify-content-center gap-2 mb-2">
+                      <button
+                        className="btn btn-outline-secondary btn-sm"
+                        onClick={() => handleQuantityChange(product._id, -1)}
+                        style={{ width: '32px', height: '32px', padding: 0 }}
+                      >
+                        <Minus size={16} />
+                      </button>
+                      <span className="fw-bold" style={{ minWidth: '30px', textAlign: 'center' }}>
+                        {getQuantity(product._id)}
+                      </span>
+                      <button
+                        className="btn btn-outline-secondary btn-sm"
+                        onClick={() => handleQuantityChange(product._id, 1)}
+                        style={{ width: '32px', height: '32px', padding: 0 }}
+                      >
+                        <Plus size={16} />
+                      </button>
+                    </div>
+
                     <button
                       className={`btn ${
                         cartItems.some((item) => item.product && item.product._id === product._id) 
@@ -305,11 +381,11 @@ const Dashboard = () => {
                           : 'btn-success'
                       }`}
                       disabled={cartItems.some((item) => item.product && item.product._id === product._id)}
-                      onClick={() => handleBuyClick(product._id)}
+                      onClick={() => handleBuyClick(product._id, getQuantity(product._id))}
                     >
                       {cartItems.some((item) => item.product && item.product._id === product._id) 
                         ? 'In Cart' 
-                        : 'Buy'
+                        : `Add ${getQuantity(product._id)} to Cart`
                       }
                     </button>
                     <button
@@ -402,6 +478,14 @@ const Dashboard = () => {
                         <span className="fw-semibold">Discounted Price:</span> ${selectedProduct.discountedPrice.toFixed(2)}
                       </div>
                     )}
+                    {getQuantity(selectedProduct._id) > 1 && (
+                      <div className="mb-2">
+                        <span className="fw-semibold">Total for {getQuantity(selectedProduct._id)}:</span> 
+                        <span className="fw-bold text-success ms-1">
+                          ${((selectedProduct.discountedPrice || selectedProduct.price) * getQuantity(selectedProduct._id)).toFixed(2)}
+                        </span>
+                      </div>
+                    )}
                     <div className="mb-2">
                       <span className="fw-semibold">Available Stock:</span> {selectedProduct.stock || 0}
                     </div>
@@ -448,23 +532,47 @@ const Dashboard = () => {
                 </div>
               </div>
               <div className="modal-footer">
-                <button
-                  className={`btn ${
-                    cartItems.some((item) => item.product && item.product._id === selectedProduct._id) 
-                      ? 'btn-secondary' 
-                      : 'btn-success'
-                  }`}
-                  disabled={cartItems.some((item) => item.product && item.product._id === selectedProduct._id)}
-                  onClick={() => handleBuyClick(selectedProduct._id)}
-                >
-                  {cartItems.some((item) => item.product && item.product._id === selectedProduct._id) 
-                    ? 'In Cart' 
-                    : 'Buy'
-                  }
-                </button>
-                <button type="button" className="btn btn-secondary" onClick={closeProductModal}>
-                  Close
-                </button>
+                <div className="d-flex align-items-center gap-3">
+                  {/* Quantity Selector in Modal */}
+                  <div className="d-flex align-items-center gap-2">
+                    <label className="form-label mb-0 fw-semibold">Quantity:</label>
+                    <button
+                      className="btn btn-outline-secondary btn-sm"
+                      onClick={() => handleQuantityChange(selectedProduct._id, -1)}
+                      style={{ width: '32px', height: '32px', padding: 0 }}
+                    >
+                      <Minus size={16} />
+                    </button>
+                    <span className="fw-bold" style={{ minWidth: '30px', textAlign: 'center' }}>
+                      {getQuantity(selectedProduct._id)}
+                    </span>
+                    <button
+                      className="btn btn-outline-secondary btn-sm"
+                      onClick={() => handleQuantityChange(selectedProduct._id, 1)}
+                      style={{ width: '32px', height: '32px', padding: 0 }}
+                    >
+                      <Plus size={16} />
+                    </button>
+                  </div>
+
+                  <button
+                    className={`btn ${
+                      cartItems.some((item) => item.product && item.product._id === selectedProduct._id) 
+                        ? 'btn-secondary' 
+                        : 'btn-success'
+                    }`}
+                    disabled={cartItems.some((item) => item.product && item.product._id === selectedProduct._id)}
+                    onClick={() => handleBuyClick(selectedProduct._id, getQuantity(selectedProduct._id))}
+                  >
+                    {cartItems.some((item) => item.product && item.product._id === selectedProduct._id) 
+                      ? 'In Cart' 
+                      : `Add ${getQuantity(selectedProduct._id)} to Cart`
+                    }
+                  </button>
+                  <button type="button" className="btn btn-secondary" onClick={closeProductModal}>
+                    Close
+                  </button>
+                </div>
               </div>
             </div>
           </div>

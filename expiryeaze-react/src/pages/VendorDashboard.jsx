@@ -32,10 +32,11 @@ const VendorDashboard = () => {
       if (res.data.success) {
         const vendorProducts = res.data.data.filter((product) => {
           const vendor = product.vendor;
-          if (vendor && typeof vendor === 'object') {
-            return vendor._id === user?.id;
-          }
-          return vendor === user?.id;
+          const isVendorProduct = vendor && typeof vendor === 'object' 
+            ? vendor._id === user?.id 
+            : vendor === user?.id;
+          const isGroceriesProduct = product.category === 'groceries';
+          return isVendorProduct && isGroceriesProduct;
         });
         setProducts(vendorProducts);
       } else {

@@ -1,15 +1,24 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useCart } from '../contexts/CartContext';
-import { Trash2, ShoppingCart, ArrowLeft, Truck, MessageCircle } from 'lucide-react';
+import { Trash2, ShoppingCart, ArrowLeft, Truck, MessageCircle, FileText, Plus, Minus } from 'lucide-react';
+import PrescriptionUploadModal from '../components/PrescriptionUploadModal';
+import PrescriptionSuccessModal from '../components/PrescriptionSuccessModal';
+import axios from 'axios';
+import { config } from '../lib/config';
 
 const Cart = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { cartItems, removeFromCart, loading, error } = useCart();
+  const { cartItems, removeFromCart, updateQuantity, loading, error } = useCart();
   const [shippingOption, setShippingOption] = useState('self'); // 'self' or 'platform'
   const [shippingFee, setShippingFee] = useState(0);
+  const [prescriptionModalOpen, setPrescriptionModalOpen] = useState(false);
+  const [prescriptionSuccessModalOpen, setPrescriptionSuccessModalOpen] = useState(false);
+  const [selectedPrescriptionProduct, setSelectedPrescriptionProduct] = useState(null);
+  const [prescriptionProducts, setPrescriptionProducts] = useState([]);
+  const [userPrescriptions, setUserPrescriptions] = useState([]);
 
   const calculateSubtotal = () => {
     return cartItems.reduce((total, item) => {
@@ -36,11 +45,62 @@ const Cart = () => {
     }
   };
 
+  // Check which products require prescription
+  useEffect(() => {
+    const checkPrescriptionRequirements = () => {
+      const prescriptionItems = cartItems.filter(
+        item => item.product?.requiresPrescription === true
+      );
+      setPrescriptionProducts(prescriptionItems);
+    };
+    checkPrescriptionRequirements();
+  }, [cartItems]);
+
+  // Fetch user's existing prescriptions
+  useEffect(() => {
+    const fetchUserPrescriptions = async () => {
+      if (!user) return;
+      try {
+        const token = localStorage.getItem('token');
+        const response = await axios.get(`${config.API_URL}/prescriptions/my-prescriptions`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        if (response.data.success) {
+          setUserPrescriptions(response.data.data);
+        }
+      } catch (err) {
+        console.error('Error fetching prescriptions:', err);
+      }
+    };
+    fetchUserPrescriptions();
+  }, [user]);
+
+  const hasPrescriptionForProduct = (productId) => {
+    return userPrescriptions.some(
+      prescription => 
+        prescription.product === productId && 
+        prescription.verificationStatus === 'approved'
+    );
+  };
+
   const handleCheckout = () => {
     if (cartItems.length === 0) {
       alert('Your cart is empty!');
       return;
     }
+
+    // Check if any items require prescription and user hasn't uploaded one
+    const prescriptionRequired = prescriptionProducts.filter(
+      item => !hasPrescriptionForProduct(item.product._id)
+    );
+
+    if (prescriptionRequired.length > 0) {
+      // Show alert with the first product that needs prescription
+      setSelectedPrescriptionProduct(prescriptionRequired[0].product);
+      setPrescriptionModalOpen(true);
+      return;
+    }
+
     // Pass shipping information to checkout
     const checkoutData = {
       shippingOption,
@@ -50,9 +110,32 @@ const Cart = () => {
     navigate('/checkout', { state: { checkoutData } });
   };
 
+  const handlePrescriptionSuccess = (prescriptionData) => {
+    setPrescriptionModalOpen(false);
+    setPrescriptionSuccessModalOpen(true);
+    // Refresh prescriptions list
+    setUserPrescriptions([...userPrescriptions, prescriptionData]);
+  };
+
   const handleContinueShopping = () => {
+    if (prescriptionSuccessModalOpen) {
+      setPrescriptionSuccessModalOpen(false);
+    }
     navigate('/dashboard');
   };
+
+  // Debug cart items
+  useEffect(() => {
+    console.log('🛒 Cart items loaded:', cartItems);
+    cartItems.forEach((item, index) => {
+      console.log(`Item ${index}:`, {
+        id: item._id || item.id,
+        productId: item.product?._id || item.product?.id,
+        productName: item.product?.name,
+        quantity: item.quantity
+      });
+    });
+  }, [cartItems]);
 
   if (loading) {
     return (
@@ -118,31 +201,49 @@ const Cart = () => {
       ) : (
         <div className="row">
           <div className="col-lg-8">
+            {/* Prescription Warning */}
+            {prescriptionProducts.length > 0 && (
+              <div className="alert alert-warning mb-3">
+                <FileText size={20} className="me-2" />
+                <strong>Prescription Required:</strong> {prescriptionProducts.length} item(s) in your cart require a valid prescription. You'll need to upload your prescription before checkout.
+              </div>
+            )}
+
             <div className="card shadow-sm">
               <div className="card-body p-0">
-                                 {cartItems.map((item) => (
-                   <div key={item._id || item.id} className="border-bottom p-4">
-                    <div className="row align-items-center">
-                      <div className="col-md-2">
-                                               <img
-                         src={item.product?.images?.[0] || item.product?.imageUrl || 'https://via.placeholder.com/100'}
-                         alt={item.product?.name || 'Product'}
-                         className="img-fluid rounded"
-                         style={{ width: '100px', height: '100px', objectFit: 'cover' }}
-                       />
-                      </div>
-                                             <div className="col-md-6">
-                         <h5 className="fw-bold mb-1">{item.product?.name || 'Product'}</h5>
-                         <p className="text-muted mb-2">{item.product?.description || 'No description available'}</p>
-                         <div className="d-flex align-items-center gap-2">
-                           <span className="badge bg-success">{item.product?.category || 'Unknown'}</span>
-                           {item.product?.discountedPrice && (
-                             <span className="badge bg-danger">
-                               {Math.round(((item.product.price - item.product.discountedPrice) / item.product.price) * 100)}% OFF
-                             </span>
-                           )}
-                         </div>
-                       </div>
+                {cartItems.map((item) => {
+                  const needsPrescription = item.product?.requiresPrescription;
+                  const hasPrescription = hasPrescriptionForProduct(item.product?._id);
+                  
+                  return (
+                    <div key={item._id || item.id} className="border-bottom p-4">
+                      <div className="row align-items-center">
+                        <div className="col-md-2">
+                          <img
+                            src={item.product?.images?.[0] || item.product?.imageUrl || 'https://via.placeholder.com/100'}
+                            alt={item.product?.name || 'Product'}
+                            className="img-fluid rounded"
+                            style={{ width: '100px', height: '100px', objectFit: 'cover' }}
+                          />
+                        </div>
+                        <div className="col-md-6">
+                          <h5 className="fw-bold mb-1">{item.product?.name || 'Product'}</h5>
+                          <p className="text-muted mb-2">{item.product?.description || 'No description available'}</p>
+                          <div className="d-flex align-items-center gap-2 flex-wrap">
+                            <span className="badge bg-success">{item.product?.category || 'Unknown'}</span>
+                            {item.product?.discountedPrice && (
+                              <span className="badge bg-danger">
+                                {Math.round(((item.product.price - item.product.discountedPrice) / item.product.price) * 100)}% OFF
+                              </span>
+                            )}
+                            {needsPrescription && (
+                              <span className={`badge ${hasPrescription ? 'bg-info' : 'bg-warning text-dark'}`}>
+                                <FileText size={12} className="me-1" />
+                                {hasPrescription ? 'Prescription Uploaded' : 'Prescription Required'}
+                              </span>
+                            )}
+                          </div>
+                        </div>
                                              <div className="col-md-2 text-center">
                          <div className="fw-bold text-success">
                            ${((item.product?.discountedPrice || item.product?.price || 0) * item.quantity).toFixed(2)}
@@ -153,21 +254,51 @@ const Cart = () => {
                            </div>
                          )}
                        </div>
-                      <div className="col-md-1 text-center">
-                        <span className="fw-semibold">Qty: {item.quantity}</span>
+                      <div className="col-md-2 text-center">
+                        {/* Quantity Controls */}
+                        <div className="d-flex align-items-center justify-content-center gap-2">
+                          <button
+                            className="btn btn-outline-secondary btn-sm"
+                            onClick={() => {
+                              const itemId = item._id || item.id;
+                              console.log('🛒 Cart decrease button clicked:', { itemId, currentQuantity: item.quantity });
+                              updateQuantity(itemId, item.quantity - 1);
+                            }}
+                            style={{ width: '28px', height: '28px', padding: 0 }}
+                            title="Decrease quantity"
+                          >
+                            <Minus size={14} />
+                          </button>
+                          <span className="fw-semibold" style={{ minWidth: '25px', textAlign: 'center' }}>
+                            {item.quantity}
+                          </span>
+                          <button
+                            className="btn btn-outline-secondary btn-sm"
+                            onClick={() => {
+                              const itemId = item._id || item.id;
+                              console.log('🛒 Cart increase button clicked:', { itemId, currentQuantity: item.quantity });
+                              updateQuantity(itemId, item.quantity + 1);
+                            }}
+                            style={{ width: '28px', height: '28px', padding: 0 }}
+                            title="Increase quantity"
+                          >
+                            <Plus size={14} />
+                          </button>
+                        </div>
                       </div>
                       <div className="col-md-1 text-end">
-                                                 <button
-                           className="btn btn-outline-danger btn-sm"
-                           onClick={() => removeFromCart(item._id || item.id)}
-                           title="Remove from cart"
-                         >
+                        <button
+                          className="btn btn-outline-danger btn-sm"
+                          onClick={() => removeFromCart(item._id || item.id)}
+                          title="Remove from cart"
+                        >
                           <Trash2 size={16} />
                         </button>
                       </div>
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
           </div>
@@ -273,6 +404,21 @@ const Cart = () => {
           </div>
         </div>
       )}
+
+      {/* Prescription Upload Modal */}
+      <PrescriptionUploadModal
+        isOpen={prescriptionModalOpen}
+        onClose={() => setPrescriptionModalOpen(false)}
+        product={selectedPrescriptionProduct}
+        onSuccess={handlePrescriptionSuccess}
+      />
+
+      {/* Prescription Success Modal */}
+      <PrescriptionSuccessModal
+        isOpen={prescriptionSuccessModalOpen}
+        onClose={() => setPrescriptionSuccessModalOpen(false)}
+        onContinueShopping={handleContinueShopping}
+      />
     </div>
   );
 };

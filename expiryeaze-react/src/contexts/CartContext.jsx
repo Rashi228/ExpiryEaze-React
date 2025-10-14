@@ -67,6 +67,36 @@ export const CartProvider = ({ children }) => {
       setLoading(false);
     }
   };
+
+  const updateQuantity = async (itemId, newQuantity) => {
+    if (!user) return;
+    setLoading(true);
+    try {
+      console.log('🛒 Updating quantity:', { itemId, newQuantity, userId: user.id });
+      
+      if (newQuantity <= 0) {
+        // If quantity is 0 or less, remove the item
+        console.log('🗑️ Removing item from cart');
+        await removeFromCart(itemId);
+      } else {
+        // Update quantity
+        console.log('📝 Updating quantity via API');
+        const response = await axios.put(`${API_URL}/cart`, { 
+          userId: user.id, 
+          itemId, 
+          quantity: newQuantity 
+        });
+        console.log('✅ API Response:', response.data);
+        await fetchCart();
+      }
+    } catch (err) {
+      console.error('❌ Update quantity error:', err);
+      console.error('❌ Error details:', err.response?.data);
+      setError(`Failed to update item quantity: ${err.response?.data?.error || err.message}`);
+    } finally {
+      setLoading(false);
+    }
+  };
   
   const clearCart = async () => {
     // This would typically be another API endpoint, for now we clear locally and can add it later
@@ -74,7 +104,7 @@ export const CartProvider = ({ children }) => {
   };
 
   return (
-    <CartContext.Provider value={{ cartItems, loading, error, addToCart, removeFromCart, clearCart }}>
+    <CartContext.Provider value={{ cartItems, loading, error, addToCart, removeFromCart, updateQuantity, clearCart }}>
       {children}
     </CartContext.Provider>
   );

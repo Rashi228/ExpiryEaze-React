@@ -9,7 +9,7 @@ const PLACEHOLDER = 'https://via.placeholder.com/300x200.png?text=No+Image';
 
 const UserMedicinesDashboard = () => {
     const navigate = useNavigate();
-    const { cartItems, addToCart } = useCart();
+    const { cartItems, addToCart, updateQuantity } = useCart();
     const [medicines, setMedicines] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -25,6 +25,8 @@ const UserMedicinesDashboard = () => {
     const [vendors, setVendors] = useState([]);
     const [selectedVendor, setSelectedVendor] = useState(null);
     const [vendorsLoading, setVendorsLoading] = useState(false);
+    // Local quantities for products not yet in cart
+    const [quantities, setQuantities] = useState({});
 
     useEffect(() => {
         fetchMedicines();
@@ -116,14 +118,36 @@ const UserMedicinesDashboard = () => {
         setSelectedMedicine(null);
     };
 
-    const handleAddToCart = async (medicineId) => {
+    const handleAddToCart = async (medicineId, quantity = 1) => {
         try {
-            await addToCart(medicineId, 1);
+            await addToCart(medicineId, quantity);
             setNotification('Medicine added to cart successfully!');
             setTimeout(() => setNotification(''), 3000);
+            setQuantities(prev => ({ ...prev, [medicineId]: 1 }));
         } catch (error) {
             setNotification('Failed to add medicine to cart.');
             setTimeout(() => setNotification(''), 3000);
+        }
+    };
+
+    // Quantity helpers
+    const getQuantity = (productId) => {
+        const cartItem = cartItems.find(ci => ci.product && ci.product._id === productId);
+        if (cartItem) return cartItem.quantity;
+        return quantities[productId] || 1;
+    };
+
+    const handleQuantityChange = (productId, change) => {
+        const cartItem = cartItems.find(ci => ci.product && ci.product._id === productId);
+        if (cartItem) {
+            const newQty = Math.max(0, cartItem.quantity + change);
+            updateQuantity(cartItem._id || cartItem.id, newQty);
+        } else {
+            setQuantities(prev => {
+                const current = prev[productId] || 1;
+                const next = Math.max(1, current + change);
+                return { ...prev, [productId]: next };
+            });
         }
     };
 
@@ -227,7 +251,17 @@ const UserMedicinesDashboard = () => {
 
             {/* Vendor Profiles Section */}
             <div className="mb-4">
-                <h5 className="mb-3">Available Medicine Vendors</h5>
+                <div className="d-flex justify-content-between align-items-center mb-3">
+                    <h5 className="mb-0">Available Medicine Vendors</h5>
+                    {vendors.length > 0 && (
+                        <button
+                            className={`btn ${!selectedVendor ? 'btn-primary' : 'btn-outline-primary'}`}
+                            onClick={() => setSelectedVendor(null)}
+                        >
+                            Browse All Vendor Products
+                        </button>
+                    )}
+                </div>
                 {vendorsLoading ? (
                     <div className="text-center py-4">
                         <div className="spinner-border text-success" role="status">
@@ -260,14 +294,16 @@ const UserMedicinesDashboard = () => {
                                     </div>
                                     <div className="mb-3">
                                         <span className="badge bg-success me-2">{products.filter(p => p.category === 'medicines').length} Medicines</span>
-                                        <span className="badge bg-info">{vendor.city || 'Location N/A'}</span>
+                                        <span className="badge bg-info">{vendor.location || vendor.city || 'Location N/A'}</span>
                                     </div>
-                                    <button
-                                        className={`btn btn-sm w-100 ${selectedVendor && selectedVendor._id === vendor._id ? 'btn-primary' : 'btn-outline-primary'}`}
-                                        onClick={() => setSelectedVendor(selectedVendor && selectedVendor._id === vendor._id ? null : vendor)}
-                                    >
-                                        {selectedVendor && selectedVendor._id === vendor._id ? 'View All Medicines' : 'View Medicines'}
-                                    </button>
+                                    <div className="d-grid gap-2">
+                                        <button
+                                            className={`btn btn-sm ${selectedVendor && selectedVendor._id === vendor._id ? 'btn-primary' : 'btn-outline-primary'}`}
+                                            onClick={() => setSelectedVendor(vendor)}
+                                        >
+                                            View {vendor.name}'s Medicines
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -275,33 +311,26 @@ const UserMedicinesDashboard = () => {
                     </div>
                 )}
                 
-                {/* Quick Filter Buttons */}
-                {vendors.length > 0 && (
-                    <div className="d-flex flex-wrap gap-2">
-                    <button
-                        className={`btn ${!selectedVendor ? 'btn-primary' : 'btn-outline-primary'}`}
-                        onClick={() => setSelectedVendor(null)}
-                    >
-                        All Vendors
-                    </button>
-                    {vendors.map(({ vendor }) => (
-                        <button
-                            key={vendor._id}
-                            className={`btn ${selectedVendor && selectedVendor._id === vendor._id ? 'btn-primary' : 'btn-outline-primary'}`}
-                            onClick={() => setSelectedVendor(vendor)}
-                        >
-                            {vendor.name}
-                        </button>
-                    ))}
-                    </div>
-                )}
+                {/* Removed chip list to declutter; use the single "Browse All Vendor Products" button above */}
             </div>
 
             {/* Medicines Grid */}
-            <div className="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
-                {filteredAndSortedMedicines
-                    .filter(medicine => !selectedVendor || medicine.vendor === selectedVendor._id)
-                    .map((medicine) => (
+            {(() => {
+                const visibleMedicines = filteredAndSortedMedicines.filter(medicine => {
+                    if (!selectedVendor) return true;
+                    const productVendorId = (medicine.vendor && typeof medicine.vendor === 'object') ? medicine.vendor._id : medicine.vendor;
+                    return productVendorId === selectedVendor._id;
+                });
+                if (selectedVendor && visibleMedicines.length === 0) {
+                    return (
+                        <div className="alert alert-warning" role="alert">
+                            No products added by {selectedVendor.name} yet. Please recheck later.
+                        </div>
+                    );
+                }
+                return (
+                    <div className="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+                        {visibleMedicines.map((medicine) => (
                     <div className="col" key={medicine._id}>
                         <div className="card h-100 shadow-sm medicine-card">
                             <div className="position-relative">
@@ -334,7 +363,11 @@ const UserMedicinesDashboard = () => {
                                 <div className="d-flex justify-content-between text-muted small mb-2">
                                     <span className="d-flex align-items-center gap-1">
                                         <Building size={14} /> 
-                                        {medicine.vendorName || 'Verified Vendor'}
+                                        { (medicine?.vendor && typeof medicine.vendor === 'object' && medicine.vendor?.name)
+                                            ? `Verified Vendor · ${medicine.vendor.name}`
+                                            : (medicine?.vendorName
+                                                ? `Verified Vendor · ${medicine.vendorName}`
+                                                : 'Verified Vendor') }
                                     </span>
                                     <div className="d-flex align-items-center">
                                         {[...Array(5)].map((_, i) => (
@@ -374,8 +407,28 @@ const UserMedicinesDashboard = () => {
 
                                 <p className="card-text small flex-grow-1">{medicine.description}</p>
                                 
-                                {/* Action Buttons */}
+                                {/* Quantity + Actions */}
                                 <div className="mt-auto d-grid gap-2">
+                                    <div className="d-flex justify-content-center align-items-center gap-2">
+                                        <button
+                                            className="btn btn-outline-secondary btn-sm"
+                                            onClick={() => handleQuantityChange(medicine._id, -1)}
+                                            style={{ width: '32px', height: '32px', padding: 0 }}
+                                        >
+                                            -
+                                        </button>
+                                        <span className="fw-bold" style={{ minWidth: '30px', textAlign: 'center' }}>
+                                            {getQuantity(medicine._id)}
+                                        </span>
+                                        <button
+                                            className="btn btn-outline-secondary btn-sm"
+                                            onClick={() => handleQuantityChange(medicine._id, 1)}
+                                            style={{ width: '32px', height: '32px', padding: 0 }}
+                                        >
+                                            +
+                                        </button>
+                                    </div>
+
                                     <button
                                         className={`btn ${
                                             cartItems.some((item) => item.product && item.product._id === medicine._id) 
@@ -383,11 +436,11 @@ const UserMedicinesDashboard = () => {
                                                 : 'btn-success'
                                         }`}
                                         disabled={cartItems.some((item) => item.product && item.product._id === medicine._id)}
-                                        onClick={() => handleAddToCart(medicine._id)}
+                                        onClick={() => handleAddToCart(medicine._id, getQuantity(medicine._id))}
                                     >
                                         {cartItems.some((item) => item.product && item.product._id === medicine._id) 
                                             ? 'In Cart' 
-                                            : 'Add to Cart'
+                                            : `Add ${getQuantity(medicine._id)} to Cart`
                                         }
                                     </button>
                                     <button
@@ -400,8 +453,10 @@ const UserMedicinesDashboard = () => {
                             </div>
                         </div>
                     </div>
-                ))}
-            </div>
+                        ))}
+                    </div>
+                );
+            })()}
 
             {/* Medicine Details Modal */}
             {selectedMedicine && modalOpen && (
@@ -452,7 +507,11 @@ const UserMedicinesDashboard = () => {
                                 <div className="row">
                                     <div className="col-md-6">
                                         <div className="mb-2">
-                                            <span className="fw-semibold">Vendor:</span> {selectedMedicine.vendorName || 'Verified Vendor'}
+                                            <span className="fw-semibold">Vendor:</span> { (selectedMedicine?.vendor && typeof selectedMedicine.vendor === 'object' && selectedMedicine.vendor?.name)
+                                                ? `${selectedMedicine.vendor.name} (Verified Vendor)`
+                                                : (selectedMedicine?.vendorName
+                                                    ? `${selectedMedicine.vendorName} (Verified Vendor)`
+                                                    : 'Verified Vendor') }
                                         </div>
                                         <div className="mb-2">
                                             <span className="fw-semibold">Location:</span> {selectedMedicine.city}

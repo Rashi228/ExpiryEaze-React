@@ -81,7 +81,9 @@ const MedicinesDashboard = () => {
             const res = await axios.get(`${config.API_URL}/products/vendor`, { 
                 headers: { Authorization: `Bearer ${token}` } 
             });
-            setProducts(res.data.products || []);
+            // Filter to show only medicines from this vendor
+            const vendorMedicines = (res.data.products || []).filter(product => product.category === 'medicines');
+            setProducts(vendorMedicines);
         } catch (err) {
             setProducts([]);
         } finally {
@@ -344,10 +346,12 @@ const MedicinesDashboard = () => {
                                                         <span className="badge bg-success">{product.category}</span>
                                                     </td>
                                                     <td>${product.price}</td>
-                                                    <td>{product.stockQuantity}</td>
+                                                    {/* Correct stock field from product.stockQuantity -> product.stock */}
+                                                    <td>{product.stock}</td>
+                                                    {/* Derive status: Active when in stock and not expired */}
                                                     <td>
-                                                        <span className={`badge ${product.isActive ? 'bg-success' : 'bg-secondary'}`}>
-                                                            {product.isActive ? 'Active' : 'Inactive'}
+                                                        <span className={`badge ${((product?.stock || 0) > 0 && (product?.expiryDate ? (new Date(product.expiryDate) > new Date()) : true)) ? 'bg-success' : 'bg-secondary'}`}>
+                                                            {((product?.stock || 0) > 0 && (product?.expiryDate ? (new Date(product.expiryDate) > new Date()) : true)) ? 'Active' : 'Inactive'}
                                                         </span>
                                                     </td>
                                                     <td>

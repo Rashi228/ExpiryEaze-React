@@ -175,51 +175,50 @@ const ReviewSection = ({ vendorId, vendorName }) => {
 
   if (loading) {
     return (
-      <div className="text-center py-8">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600 mx-auto"></div>
-        <p className="mt-2 text-gray-600">Loading reviews...</p>
+      <div className="text-center py-3">
+        <div className="spinner-border text-success" role="status" style={{ width: '1.5rem', height: '1.5rem' }}>
+          <span className="visually-hidden">Loading...</span>
+        </div>
+        <p className="mt-2 text-muted small">Loading reviews...</p>
       </div>
     );
   }
 
      return (
-     <div className="bg-white rounded-lg shadow-sm border">
+    <div className="bg-white text-dark rounded-lg shadow-sm border">
        {/* Header */}
-       <div className="p-4 border-b">
-         <div className="flex justify-between items-start">
+       <div className="p-3 border-b">
+         <div className="flex justify-between items-center">
            <div>
-             <h4 className="text-base font-semibold mb-1">Customer Reviews</h4>
-             <div className="flex items-center gap-3">
-               <div className="flex items-center gap-1">
-                 <div className="flex">
-                   {[1, 2, 3, 4, 5].map((star) => (
-                     <Star
-                       key={star}
-                       size={16}
-                       fill={star <= ratingStats.averageRating ? '#fbbf24' : 'none'}
-                       stroke={star <= ratingStats.averageRating ? '#fbbf24' : '#d1d5db'}
-                     />
-                   ))}
-                 </div>
-                 <span className="font-semibold text-sm">{ratingStats.averageRating.toFixed(1)}</span>
+            <h4 className="mb-1 small fw-semibold">Reviews</h4>
+            <div className="d-flex align-items-center gap-2">
+               <div className="flex">
+                 {[1, 2, 3, 4, 5].map((star) => (
+                   <Star
+                     key={star}
+                     size={12}
+                     fill={star <= ratingStats.averageRating ? '#fbbf24' : 'none'}
+                     stroke={star <= ratingStats.averageRating ? '#fbbf24' : '#d1d5db'}
+                   />
+                 ))}
                </div>
-               <span className="text-gray-600 text-sm">({ratingStats.numReviews} reviews)</span>
+               <span className="font-semibold text-xs">{ratingStats.averageRating.toFixed(1)}</span>
+               <span className="text-gray-600 text-xs">({ratingStats.numReviews})</span>
              </div>
            </div>
            
-                       {/* Always show the review button for debugging */}
             <button
               onClick={() => setShowReviewModal(true)}
-              className="flex items-center gap-1 px-2 py-1 bg-green-500 text-white rounded text-xs hover:bg-green-600 font-medium shadow-sm"
+              className="flex items-center gap-1 px-3 py-1.5 bg-green-600 text-white rounded text-xs hover:bg-green-700 font-medium shadow-sm"
             >
-              <Plus size={12} />
+              <Plus size={10} />
               {myReview ? 'Edit' : 'Review'}
             </button>
          </div>
 
-                 {/* Rating Distribution */}
+         {/* Rating Distribution - Compact */}
          {ratingStats.numReviews > 0 && (
-           <div className="mt-3 space-y-1">
+           <div className="mt-2 space-y-0.5">
              {[5, 4, 3, 2, 1].map((rating) => {
                const count = ratingStats.ratingDistribution[rating] || 0;
                const percentage = ratingStats.numReviews > 0 
@@ -227,15 +226,15 @@ const ReviewSection = ({ vendorId, vendorName }) => {
                  : 0;
                
                return (
-                 <div key={rating} className="flex items-center gap-2">
-                   <span className="text-xs w-6">{rating}★</span>
-                   <div className="flex-1 bg-gray-200 rounded-full h-1">
+                <div key={rating} className="d-flex align-items-center gap-1">
+                  <span className="small" style={{ width: '22px' }}>{rating}★</span>
+                  <div className="flex-grow-1 bg-light rounded-pill" style={{ height: '4px' }}>
                      <div 
-                       className="bg-yellow-400 h-1 rounded-full"
-                       style={{ width: `${percentage}%` }}
+                      className="bg-warning rounded-pill"
+                      style={{ width: `${percentage}%`, height: '4px' }}
                      ></div>
                    </div>
-                   <span className="text-xs text-gray-600 w-8">{count}</span>
+                  <span className="small text-muted" style={{ width: '24px' }}>{count}</span>
                  </div>
                );
              })}
@@ -243,112 +242,111 @@ const ReviewSection = ({ vendorId, vendorName }) => {
          )}
        </div>
 
-       {/* Reviews List */}
-       <div className="p-4">
-                 {reviews.length === 0 ? (
-           <div className="text-center py-4">
-             <MessageCircle size={32} className="text-gray-300 mx-auto mb-2" />
-             <p className="text-gray-600 text-sm">No reviews yet</p>
-                           {/* Always show the Give Review button when no reviews */}
-              <div className="mt-3">
-                <p className="text-xs text-gray-500 mb-2">Be the first to review this vendor!</p>
-                <button
-                  onClick={() => setShowReviewModal(true)}
-                  className="flex items-center gap-1 px-3 py-1.5 bg-green-500 text-white rounded text-xs hover:bg-green-600 font-medium mx-auto shadow-sm"
-                >
-                  <Plus size={12} />
-                  Give Review
-                </button>
-              </div>
+      {/* Reviews List */}
+      <div className="p-3 text-dark">
+         {reviews.length === 0 ? (
+           <div className="text-center py-3">
+            <MessageCircle size={20} className="text-muted mx-auto mb-1" />
+            <p className="text-muted small">No reviews yet</p>
+             <div className="mt-2">
+               <button
+                 onClick={() => setShowReviewModal(true)}
+                 className="flex items-center gap-1 px-3 py-1.5 bg-green-600 text-white rounded text-xs hover:bg-green-700 font-medium mx-auto shadow-sm"
+               >
+                 <Plus size={10} />
+                 Give Review
+               </button>
+             </div>
            </div>
          ) : (
-           <div className="space-y-4">
-             {/* Give Review Button at the top when reviews exist */}
-                           {/* Always show the Give Review button when reviews exist */}
-              {!myReview && (
-                <div className="text-center py-2 border-b border-gray-100">
-                  <button
-                    onClick={() => setShowReviewModal(true)}
-                    className="flex items-center gap-1 px-3 py-1.5 bg-green-500 text-white rounded text-xs hover:bg-green-600 font-medium mx-auto shadow-sm"
-                  >
-                    <Plus size={12} />
-                    Give Review
-                  </button>
-                </div>
-              )}
+           <div className="space-y-3">
+             {/* Give Review Button - Compact */}
+             {!myReview && (
+               <div className="text-center py-1 border-b border-gray-100">
+                 <button
+                   onClick={() => setShowReviewModal(true)}
+                   className="flex items-center gap-1 px-3 py-1.5 bg-green-600 text-white rounded text-xs hover:bg-green-700 font-medium mx-auto shadow-sm"
+                 >
+                   <Plus size={10} />
+                   Give Review
+                 </button>
+               </div>
+             )}
              
              {reviews.map((review) => (
-               <div key={review._id} className="border-b border-gray-100 pb-4 last:border-b-0">
-                 <div className="flex justify-between items-start mb-2">
-                   <div className="flex items-center gap-2">
-                     <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
-                       <span className="text-green-600 font-semibold text-sm">
+               <div key={review._id} className="border-b border-gray-100 pb-2 last:border-b-0">
+                <div className="d-flex justify-content-between align-items-start mb-1">
+                  <div className="d-flex align-items-center gap-2">
+                     <div className="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center">
+                       <span className="text-white font-semibold text-xs">
                          {review.user.name.charAt(0).toUpperCase()}
                        </span>
                      </div>
                      <div>
-                       <p className="font-semibold text-sm">{review.user.name}</p>
-                       <p className="text-xs text-gray-500">{formatDate(review.createdAt)}</p>
+                      <p className="fw-semibold small mb-0">{review.user.name}</p>
+                      <small className="text-muted">{formatDate(review.createdAt)}</small>
                      </div>
                    </div>
                    
                    {user && review.user._id === user.id && (
-                     <div className="flex gap-1">
+                    <div className="d-flex gap-1">
                        <button
                          onClick={() => {
                            setMyReview(review);
                            setShowReviewModal(true);
                          }}
-                         className="text-blue-600 hover:text-blue-800"
+                         className="p-1 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded"
+                         title="Edit review"
                        >
-                         <Edit size={14} />
+                         <Edit size={12} />
                        </button>
                        <button
                          onClick={() => handleDeleteReview(review._id)}
-                         className="text-red-600 hover:text-red-800"
+                         className="p-1 text-red-600 hover:text-red-800 hover:bg-red-50 rounded"
+                         title="Delete review"
                        >
-                         <Trash2 size={14} />
+                         <Trash2 size={12} />
                        </button>
                      </div>
                    )}
                  </div>
 
-                                 <div className="flex items-center gap-2 mb-1">
-                   <div className="flex">
+                <div className="d-flex align-items-center gap-2 mb-1">
+                  <div className="d-flex">
                      {[1, 2, 3, 4, 5].map((star) => (
                        <Star
                          key={star}
-                         size={14}
+                         size={10}
                          fill={star <= review.rating ? '#fbbf24' : 'none'}
                          stroke={star <= review.rating ? '#fbbf24' : '#d1d5db'}
                        />
                      ))}
                    </div>
-                   <span className="text-xs text-gray-600">
+                  <span className="small text-muted">
                      {getRatingText(review.rating)}
                    </span>
                  </div>
 
-                 <h5 className="font-semibold text-sm mb-1">{review.title}</h5>
-                 <p className="text-gray-700 text-sm mb-2">{review.comment}</p>
+                <h6 className="fw-semibold small mb-1">{review.title}</h6>
+                <p className="small mb-1">{review.comment}</p>
 
-                                 {/* Review Images */}
+                 {/* Review Images - Compact */}
                  {review.images && review.images.length > 0 && (
-                   <div className="flex gap-1 mb-2 overflow-x-auto">
+                  <div className="d-flex gap-1 mb-1 overflow-auto">
                      {review.images.map((image, index) => (
                        <img
                          key={index}
                          src={image}
                          alt={`Review ${index + 1}`}
-                         className="w-16 h-16 object-cover rounded border"
+                         className="w-12 h-12 object-cover rounded border"
                        />
                      ))}
                    </div>
                  )}
 
-                 {/* Helpful Button */}
+                 {/* Helpful Button - Compact */}
                  {user && (
-                   <div className="flex items-center gap-2">
+                  <div className="d-flex align-items-center">
                      <button
                        onClick={() => {
                          const isHelpful = review.helpful.find(h => h.user === user.id)?.helpful;
@@ -360,20 +358,20 @@ const ReviewSection = ({ vendorId, vendorName }) => {
                            : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                        }`}
                      >
-                       <ThumbsUp size={12} />
-                       Helpful ({review.helpful.filter(h => h.helpful).length})
+                       <ThumbsUp size={10} />
+                       {review.helpful.filter(h => h.helpful).length}
                      </button>
                    </div>
                  )}
               </div>
             ))}
 
-                         {/* Load More Button */}
+             {/* Load More Button - Compact */}
              {hasMore && (
-               <div className="text-center pt-3">
+              <div className="text-center pt-2">
                  <button
                    onClick={loadMoreReviews}
-                   className="px-4 py-1 border border-gray-300 rounded text-sm text-gray-700 hover:bg-gray-50"
+                  className="btn btn-light btn-sm"
                  >
                    Load More
                  </button>

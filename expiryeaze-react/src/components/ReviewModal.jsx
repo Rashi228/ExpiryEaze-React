@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Star, X, Upload, Trash2 } from 'lucide-react';
 import axios from 'axios';
 import { config } from '../lib/config';
@@ -13,6 +13,7 @@ const ReviewModal = ({ isOpen, onClose, vendorId, vendorName, onReviewSubmit, ex
   const [error, setError] = useState('');
 
   const API_URL = config.API_URL;
+  const modalBoxRef = useRef(null);
 
   useEffect(() => {
     if (existingReview) {
@@ -32,6 +33,15 @@ const ReviewModal = ({ isOpen, onClose, vendorId, vendorName, onReviewSubmit, ex
   const removeImage = (index) => {
     setImages(prev => prev.filter((_, i) => i !== index));
   };
+
+  // Debug: always run when modal opens to confirm compact styling applied
+  useEffect(() => {
+    if (isOpen && modalBoxRef.current) {
+      const cs = window.getComputedStyle(modalBoxRef.current);
+      // eslint-disable-next-line no-console
+      console.log('[ReviewModal debug] padding:', cs.padding, 'boxShadow:', cs.boxShadow, 'border:', cs.border);
+    }
+  }, [isOpen]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -118,38 +128,37 @@ const ReviewModal = ({ isOpen, onClose, vendorId, vendorName, onReviewSubmit, ex
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg max-w-md w-full max-h-[85vh] overflow-y-auto">
-        <div className="p-4">
-          <div className="flex justify-between items-center mb-3">
-            <h2 className="text-lg font-bold">
-              {existingReview ? 'Edit Review' : 'Write a Review'}
+    <div className="fixed inset-0 d-flex align-items-center justify-content-center" style={{ background: 'rgba(0,0,0,0.5)', zIndex: 1050 }}>
+      <div ref={modalBoxRef} className="bg-white text-dark" style={{ maxWidth: 420, width: '100%', maxHeight: '80vh', overflowY: 'auto', border: '1px solid #dee2e6', borderRadius: 8, boxShadow: 'none' }}>
+        <div className="p-2">
+          <div className="d-flex justify-content-between align-items-center mb-2">
+            <h2 className="text-sm fw-bold mb-0">
+              {existingReview ? 'Edit Review' : 'Write Review'}
             </h2>
             <button
               onClick={handleClose}
               disabled={isSubmitting}
               className="text-gray-500 hover:text-gray-700"
             >
-              <X size={20} />
+              <X size={14} />
             </button>
           </div>
 
-          <div className="mb-3">
-            <p className="text-sm text-gray-600 mb-1">Reviewing:</p>
-            <p className="font-semibold text-sm">{vendorName}</p>
+          <div className="mb-2">
+            <p className="text-xs text-muted mb-0">Reviewing: <span className="fw-semibold">{vendorName}</span></p>
           </div>
 
           {error && (
-            <div className="mb-3 p-2 bg-red-100 border border-red-400 text-red-700 rounded text-sm">
+            <div className="mb-2 text-danger small">
               {error}
             </div>
           )}
 
           <form onSubmit={handleSubmit}>
             {/* Rating */}
-            <div className="mb-3">
-              <label className="block text-sm font-medium mb-1">Rating *</label>
-              <div className="flex gap-1">
+            <div className="mb-2">
+              <label className="block text-xs fw-medium mb-1">Rating *</label>
+              <div className="d-flex gap-1">
                 {[1, 2, 3, 4, 5].map((star) => (
                   <button
                     key={star}
@@ -160,7 +169,7 @@ const ReviewModal = ({ isOpen, onClose, vendorId, vendorName, onReviewSubmit, ex
                     className="transition-colors"
                   >
                     <Star
-                      size={24}
+                      size={16}
                       fill={star <= (hoveredRating || rating) ? '#fbbf24' : 'none'}
                       stroke={star <= (hoveredRating || rating) ? '#fbbf24' : '#d1d5db'}
                       className="cursor-pointer"
@@ -168,7 +177,7 @@ const ReviewModal = ({ isOpen, onClose, vendorId, vendorName, onReviewSubmit, ex
                   </button>
                 ))}
               </div>
-              <p className="text-xs text-gray-500 mt-1">
+              <p className="text-xs text-muted mt-1 mb-0">
                 {rating > 0 && (
                   <>
                     {rating === 1 && 'Poor'}
@@ -182,57 +191,57 @@ const ReviewModal = ({ isOpen, onClose, vendorId, vendorName, onReviewSubmit, ex
             </div>
 
             {/* Title */}
-            <div className="mb-3">
-              <label className="block text-sm font-medium mb-1">Review Title *</label>
+            <div className="mb-2">
+              <label className="block text-xs fw-medium mb-1">Title *</label>
               <input
                 type="text"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 text-sm"
+                className="w-full px-2 py-1 border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-green-500 text-xs"
                 placeholder="Summarize your experience"
                 maxLength={100}
                 required
               />
-              <p className="text-xs text-gray-500 mt-1">{title.length}/100</p>
+              <p className="text-xs text-muted mt-1 mb-0">{title.length}/100</p>
             </div>
 
             {/* Comment */}
-            <div className="mb-3">
-              <label className="block text-sm font-medium mb-1">Review Comment *</label>
+            <div className="mb-2">
+              <label className="block text-xs fw-medium mb-1">Comment *</label>
               <textarea
                 value={comment}
                 onChange={(e) => setComment(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 text-sm"
-                rows={3}
-                placeholder="Share your detailed experience with this vendor..."
+                className="w-full px-2 py-1 border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-green-500 text-xs"
+                rows={2}
+                placeholder="Share your experience..."
                 maxLength={500}
                 required
               />
-              <p className="text-xs text-gray-500 mt-1">{comment.length}/500</p>
+              <p className="text-xs text-muted mt-1 mb-0">{comment.length}/500</p>
             </div>
 
-            {/* Image Upload */}
-            <div className="mb-4">
-              <label className="block text-sm font-medium mb-1">Add Photos (Optional)</label>
-              <div className="grid grid-cols-5 gap-1 mb-1">
+            {/* Image Upload - Compact */}
+            <div className="mb-2">
+              <label className="block text-xs fw-medium mb-1">Photos (Optional)</label>
+              <div className="grid grid-cols-4 gap-1 mb-1">
                 {images.map((image, index) => (
                   <div key={index} className="relative">
                     <img
                       src={image}
                       alt={`Review ${index + 1}`}
-                      className="w-full h-16 object-cover rounded border"
+                      className="w-full h-12 object-cover rounded border"
                     />
                     <button
                       type="button"
                       onClick={() => removeImage(index)}
                       className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full p-0.5"
                     >
-                      <Trash2 size={10} />
+                      <Trash2 size={8} />
                     </button>
                   </div>
                 ))}
                 {images.length < 5 && (
-                  <label className="w-full h-16 border-2 border-dashed border-gray-300 rounded flex items-center justify-center cursor-pointer hover:border-gray-400">
+                  <label className="w-full h-12 border border-gray-300 rounded d-flex align-items-center justify-content-center cursor-pointer">
                     <input
                       type="file"
                       accept="image/*"
@@ -240,29 +249,29 @@ const ReviewModal = ({ isOpen, onClose, vendorId, vendorName, onReviewSubmit, ex
                       onChange={handleImageUpload}
                       className="hidden"
                     />
-                    <Upload size={16} className="text-gray-400" />
+                    <Upload size={12} className="text-gray-400" />
                   </label>
                 )}
               </div>
-              <p className="text-xs text-gray-500">Upload up to 5 photos</p>
+              <p className="text-xs text-muted mb-0">Max 5 photos</p>
             </div>
 
-            {/* Submit Button */}
-            <div className="flex gap-3">
+            {/* Submit Button - Compact */}
+            <div className="d-flex gap-2">
               <button
                 type="button"
                 onClick={handleClose}
                 disabled={isSubmitting}
-                className="flex-1 px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+                className="flex-1 px-3 py-1.5 border border-gray-300 rounded text-xs text-gray-700 hover:bg-gray-50 disabled:opacity-50"
               >
                 Cancel
               </button>
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="flex-1 px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:opacity-50"
+                className="flex-1 px-3 py-1.5 bg-green-600 text-white rounded text-xs hover:bg-green-700 disabled:opacity-50"
               >
-                {isSubmitting ? 'Submitting...' : (existingReview ? 'Update Review' : 'Submit Review')}
+                {isSubmitting ? 'Saving...' : (existingReview ? 'Update' : 'Submit')}
               </button>
             </div>
           </form>
