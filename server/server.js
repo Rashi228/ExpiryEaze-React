@@ -22,7 +22,9 @@ connectDB();
 
 // Middleware
 app.use(cors()); // Allow cross-origin requests
-app.use(express.json()); // Allow app to accept JSON in the request body
+// Increase body size limits to support image data strings and larger payloads
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 // Create uploads directory if it doesn't exist
 const uploadsDir = path.join(__dirname, 'uploads', 'prescriptions');

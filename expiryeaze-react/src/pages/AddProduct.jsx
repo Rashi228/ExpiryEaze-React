@@ -125,12 +125,26 @@ const AddProduct = () => {
       return;
     }
 
+    // Basic client-side validation to avoid NaN/empty submits
+    const priceNum = parseFloat(product.price);
+    const stockNum = parseInt(product.stock, 10);
+    if (Number.isNaN(priceNum) || priceNum <= 0) {
+      setError('Please enter a valid price.');
+      setLoading(false);
+      return;
+    }
+    if (Number.isNaN(stockNum) || stockNum < 0) {
+      setError('Please enter a valid stock quantity.');
+      setLoading(false);
+      return;
+    }
+
     const productData = {
       ...product,
       vendor: user.id,
       vendorName: user.name,
-      price: parseFloat(product.price),
-      stock: parseInt(product.stock, 10),
+      price: priceNum,
+      stock: stockNum,
       discountedPrice: product.discountedPrice ? parseFloat(product.discountedPrice) : undefined,
       images: images.map(img => img.url),
       expiryPhoto: expiryPhoto,
@@ -152,8 +166,9 @@ const AddProduct = () => {
         navigate('/vendor-dashboard');
       }
     } catch (err) {
-      setError('Failed to save product. Please check your inputs.');
-      console.error(err);
+      const serverMsg = err?.response?.data?.error;
+      setError(serverMsg || 'Failed to save product. Please check your inputs.');
+      console.error('Save product error:', err?.response?.data || err);
     } finally {
       setLoading(false);
     }

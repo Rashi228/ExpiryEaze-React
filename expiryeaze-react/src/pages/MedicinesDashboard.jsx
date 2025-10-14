@@ -32,6 +32,7 @@ const MedicinesDashboard = () => {
     const [showProfileModal, setShowProfileModal] = useState(false);
     const [products, setProducts] = useState([]);
     const [productsLoading, setProductsLoading] = useState(true);
+    const [stats, setStats] = useState({ totalProducts: 0, totalOrders: 0, totalRevenue: 0, totalViews: 0 });
 
     useEffect(() => {
         const fetchMedicines = async () => {
@@ -84,12 +85,42 @@ const MedicinesDashboard = () => {
             // Filter to show only medicines from this vendor
             const vendorMedicines = (res.data.products || []).filter(product => product.category === 'medicines');
             setProducts(vendorMedicines);
+            // Update stats from products list for now (server-side aggregation can replace this later)
+            const totalProducts = vendorMedicines.length;
+            setStats(prev => ({ ...prev, totalProducts }));
         } catch (err) {
             setProducts([]);
         } finally {
             setProductsLoading(false);
         }
     };
+
+    // TODO: Replace with real orders/analytics endpoints when available
+    useEffect(() => {
+        const token = localStorage.getItem('token');
+        const fetchOrders = async () => {
+            try {
+                const res = await axios.get(`${config.API_URL}/orders`, { headers: { Authorization: `Bearer ${token}` } });
+                const orders = res.data?.data || res.data?.orders || [];
+                // Compute orders/revenue for this vendor's products only
+                const productIds = new Set(products.map(p => p._id));
+                let totalOrders = 0;
+                let totalRevenue = 0;
+                orders.forEach(o => {
+                    (o.products || []).forEach(op => {
+                        if (productIds.has(op.product?._id || op.product)) {
+                            totalOrders += 1;
+                            totalRevenue += (op.price || 0) * (op.quantity || 0);
+                        }
+                    });
+                });
+                setStats(prev => ({ ...prev, totalOrders, totalRevenue }));
+            } catch (e) {
+                // Keep defaults on error
+            }
+        };
+        if (products.length) fetchOrders();
+    }, [products]);
 
     const showNotification = (message) => {
         setNotification(message);
@@ -251,7 +282,7 @@ const MedicinesDashboard = () => {
                                     <div className="text-info mb-2">
                                         <i className="fas fa-eye" style={{ fontSize: '2rem' }}></i>
                                     </div>
-                                    <h3 className="card-title mb-1">0</h3>
+                                    <h3 className="card-title mb-1">{stats.totalViews}</h3>
                                     <p className="card-text text-muted">Total Views</p>
                                 </div>
                             </div>
@@ -262,7 +293,7 @@ const MedicinesDashboard = () => {
                                     <div className="text-warning mb-2">
                                         <i className="fas fa-shopping-cart" style={{ fontSize: '2rem' }}></i>
                                     </div>
-                                    <h3 className="card-title mb-1">0</h3>
+                                    <h3 className="card-title mb-1">{stats.totalOrders}</h3>
                                     <p className="card-text text-muted">Total Orders</p>
                                 </div>
                             </div>
@@ -273,7 +304,7 @@ const MedicinesDashboard = () => {
                                     <div className="text-primary mb-2">
                                         <i className="fas fa-dollar-sign" style={{ fontSize: '2rem' }}></i>
                                     </div>
-                                    <h3 className="card-title mb-1">$0</h3>
+                                    <h3 className="card-title mb-1">${stats.totalRevenue.toFixed(0)}</h3>
                                     <p className="card-text text-muted">Total Revenue</p>
                                 </div>
                             </div>
