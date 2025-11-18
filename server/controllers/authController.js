@@ -10,6 +10,8 @@ exports.register = async (req, res) => {
     if (!name || !email || !password || !role) {
       return res.status(400).json({ success: false, error: 'All fields are required.' });
     }
+    
+    // The "Email already registered" check is good and should stay
     const existingUser = await User.findOne({ email });
     if (existingUser) {
       return res.status(400).json({ success: false, error: 'Email already registered.' });
@@ -17,8 +19,16 @@ exports.register = async (req, res) => {
     const hashedPassword = await bcrypt.hash(password, 10);
     const user = new User({ name, email, password: hashedPassword, role });
     await user.save();
+    
     res.status(201).json({ success: true, message: 'Registration successful.' });
   } catch (err) {
+    // NEW: Check for Mongoose Validation Errors
+    if (err.name === 'ValidationError') {
+      // Extract the first error message
+      const message = Object.values(err.errors).map(val => val.message)[0];
+      return res.status(400).json({ success: false, error: message });
+    }
+    // Fallback for other errors
     res.status(500).json({ success: false, error: err.message });
   }
 };

@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { useCart } from '../contexts/CartContext';
+import { useAuth } from '../contexts/AuthContext';
 import { Star, ShoppingCart, Search, MapPin, Building, CalendarCheck2, MessageCircle, Package } from 'lucide-react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
@@ -9,6 +10,7 @@ import { config } from '../lib/config';
 const PLACEHOLDER = 'https://via.placeholder.com/300x200.png?text=No+Image';
 
 const UserDashboard = () => {
+  const { user } = useAuth();
   const { cartItems, addToCart, updateQuantity } = useCart();
   const [products, setProducts] = useState([]);
   const [wishlist, setWishlist] = useState([]);
@@ -134,6 +136,47 @@ const UserDashboard = () => {
   };
 
   const handleAddToCart = async (productId, quantity = 1) => {
+    // Check if user is signed in
+    if (!user) {
+      setNotification('Please sign in to purchase products!');
+      setTimeout(() => {
+        setNotification('');
+        navigate('/login');
+      }, 2000);
+      return;
+    }
+    
+    // Check if user has joined waitlist as "user" role
+    try {
+      const checkResponse = await axios.get(`${config.API_URL}/auth/waitlist/check`, {
+        params: {
+          email: user.email,
+          role: 'user'
+        }
+      });
+      
+      if (!checkResponse.data.joined) {
+        setNotification('Please join the waitlist as a user to add products to cart!');
+        setTimeout(() => {
+          setNotification('');
+          navigate('/join-waitlist');
+        }, 2000);
+        return;
+      }
+    } catch (error) {
+      console.error('Error checking waitlist:', error);
+      // If API fails, check if user has role set (fallback)
+      if (!user.role || user.role !== 'user') {
+        setNotification('Please join the waitlist as a user to add products to cart!');
+        setTimeout(() => {
+          setNotification('');
+          navigate('/join-waitlist');
+        }, 2000);
+        return;
+      }
+    }
+    
+    // If user is signed in and has joined waitlist as user, add to cart
     try {
       await addToCart(productId, quantity);
       setNotification('Product added to cart successfully!');

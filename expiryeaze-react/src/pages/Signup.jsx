@@ -48,7 +48,7 @@ const Signup = () => {
                 <form onSubmit={handleSubmit}>
                   <div className="mb-3">
                     <label htmlFor="name" className="form-label fw-semibold">
-                      Full Name
+                      Full Name <span className="text-muted">(First Name + Last Name)</span>
                     </label>
                     <input
                       type="text"
@@ -57,7 +57,14 @@ const Signup = () => {
                       name="name"
                       value={name}
                       onChange={(e) => setName(e.target.value)}
+                      onBlur={(e) => setName(e.target.value.trim())}
                       required
+                      minLength="5"
+                      // STRICT PATTERN: Requires first name + last name (at least 2 words, each min 2 characters)
+                      pattern="^[A-Za-z]{2,}(\s+[A-Za-z]{2,})+$"
+                      // UPDATED TITLE:
+                      title="Please enter your full name with first name and last name (e.g., 'John Doe'). Each name must be at least 2 letters."
+                      placeholder="e.g., John Doe"
                     />
                   </div>
                   
@@ -73,6 +80,9 @@ const Signup = () => {
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       required
+                      // STRICT PATTERN: Requires proper domain with TLD (e.g., example.com, not just example)
+                      pattern="^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9][a-zA-Z0-9.-]*[a-zA-Z0-9]\.[a-zA-Z]{2,}$"
+                      title="Please enter a valid email address with proper domain (e.g., user@example.com). Domain must have a top-level domain like .com, .org, etc."
                     />
                   </div>
                   
@@ -88,6 +98,10 @@ const Signup = () => {
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       required
+                      minLength="8" // Add minLength
+                      // Fixed regex: Added * quantifier in lookaheads
+                      pattern="^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$"
+                      title="Must be at least 8 characters, including one uppercase, one lowercase, one number, and one special character (@$!%*?&)." // Explain the error
                     />
                   </div>
                   

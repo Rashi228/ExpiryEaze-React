@@ -243,6 +243,8 @@ const MedicineVendorVerification = () => {
                       value={formData.email}
                       onChange={handleInputChange}
                       required
+                      pattern="^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9][a-zA-Z0-9.-]*[a-zA-Z0-9]\.[a-zA-Z]{2,}$"
+                      title="Please enter a valid email address with proper domain (e.g., user@example.com). Domain must have a top-level domain like .com, .org, etc."
                     />
                   </div>
                   <div className="col-md-6 mb-3">

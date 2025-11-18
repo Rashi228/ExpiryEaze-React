@@ -24,6 +24,7 @@ const UserMedicinesDashboard = () => {
     const [notification, setNotification] = useState('');
     const [vendors, setVendors] = useState([]);
     const [selectedVendor, setSelectedVendor] = useState(null);
+    const [showAllProducts, setShowAllProducts] = useState(false);
     const [vendorsLoading, setVendorsLoading] = useState(false);
     // Local quantities for products not yet in cart
     const [quantities, setQuantities] = useState({});
@@ -255,8 +256,11 @@ const UserMedicinesDashboard = () => {
                     <h5 className="mb-0">Available Medicine Vendors</h5>
                     {vendors.length > 0 && (
                         <button
-                            className={`btn ${!selectedVendor ? 'btn-primary' : 'btn-outline-primary'}`}
-                            onClick={() => setSelectedVendor(null)}
+                            className={`btn ${showAllProducts && !selectedVendor ? 'btn-primary' : 'btn-outline-primary'}`}
+                            onClick={() => {
+                                setSelectedVendor(null);
+                                setShowAllProducts(true);
+                            }}
                         >
                             Browse All Vendor Products
                         </button>
@@ -299,9 +303,22 @@ const UserMedicinesDashboard = () => {
                                     <div className="d-grid gap-2">
                                         <button
                                             className={`btn btn-sm ${selectedVendor && selectedVendor._id === vendor._id ? 'btn-primary' : 'btn-outline-primary'}`}
-                                            onClick={() => setSelectedVendor(vendor)}
+                                            onClick={() => {
+                                                // Toggle: if same vendor is selected, deselect it (hide products)
+                                                // Otherwise, select this vendor (show their products)
+                                                if (selectedVendor && selectedVendor._id === vendor._id) {
+                                                    setSelectedVendor(null);
+                                                    setShowAllProducts(false); // Hide products when deselecting
+                                                } else {
+                                                    setSelectedVendor(vendor);
+                                                    setShowAllProducts(false); // Don't show all when selecting specific vendor
+                                                }
+                                            }}
                                         >
-                                            View {vendor.name}'s Medicines
+                                            {selectedVendor && selectedVendor._id === vendor._id 
+                                                ? `Hide ${vendor.name}'s Medicines` 
+                                                : `View ${vendor.name}'s Medicines`
+                                            }
                                         </button>
                                     </div>
                                 </div>
@@ -316,11 +333,18 @@ const UserMedicinesDashboard = () => {
 
             {/* Medicines Grid */}
             {(() => {
+                // Only show medicines if a vendor is selected OR showAllProducts is true
+                if (!selectedVendor && !showAllProducts) {
+                    return null; // Hide products section when nothing is selected
+                }
+                
                 const visibleMedicines = filteredAndSortedMedicines.filter(medicine => {
-                    if (!selectedVendor) return true;
+                    if (showAllProducts && !selectedVendor) return true; // Show all when "Browse All" is clicked
+                    if (!selectedVendor) return false; // Hide if no vendor selected and not showing all
                     const productVendorId = (medicine.vendor && typeof medicine.vendor === 'object') ? medicine.vendor._id : medicine.vendor;
                     return productVendorId === selectedVendor._id;
                 });
+                
                 if (selectedVendor && visibleMedicines.length === 0) {
                     return (
                         <div className="alert alert-warning" role="alert">

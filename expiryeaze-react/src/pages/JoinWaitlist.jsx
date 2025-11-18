@@ -195,7 +195,7 @@ const JoinWaitlist = () => {
                 <form onSubmit={handleSubmit}>
                   <div className="mb-3">
                     <label htmlFor="name" className="form-label fw-semibold">
-                      Name
+                      Full Name <span className="text-muted">(First Name + Last Name)</span>
                     </label>
                     <input
                       type="text"
@@ -204,7 +204,15 @@ const JoinWaitlist = () => {
                       name="name"
                       value={formData.name}
                       onChange={handleInputChange}
+                      onBlur={(e) => {
+                        const trimmed = e.target.value.trim();
+                        handleInputChange({ target: { name: 'name', value: trimmed } });
+                      }}
                       required
+                      minLength="5"
+                      pattern="^[A-Za-z]{2,}(\s+[A-Za-z]{2,})+$"
+                      title="Please enter your full name with first name and last name (e.g., 'John Doe'). Each name must be at least 2 letters."
+                      placeholder="e.g., John Doe"
                     />
                   </div>
                   <div className="mb-3">
@@ -219,6 +227,8 @@ const JoinWaitlist = () => {
                       value={formData.email}
                       disabled
                       required
+                      pattern="^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9][a-zA-Z0-9.-]*[a-zA-Z0-9]\.[a-zA-Z]{2,}$"
+                      title="Please enter a valid email address with proper domain (e.g., user@example.com). Domain must have a top-level domain like .com, .org, etc."
                     />
                   </div>
                   <div className="mb-3">

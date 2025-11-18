@@ -70,17 +70,6 @@ const Header = () => {
               Home
             </Link>
             
-            {user && user.role !== 'vendor' && (
-              <Link
-                to="/medicines"
-                className={`font-bold text-gray-700 hover:text-success transition duration-300 px-3 py-2 rounded-full hover:bg-success-light ${
-                  isActive('/medicines') ? "text-success bg-success-light" : ""
-                }`}
-              >
-                Medicines
-              </Link>
-            )}
-            
                          <Link
                to="/dashboard"
                className={`font-bold text-gray-700 hover:text-success transition duration-300 px-3 py-2 rounded-full hover:bg-success-light ${
@@ -171,18 +160,6 @@ const Header = () => {
             >
               Home
             </Link>
-            
-            {user && user.role !== 'vendor' && (
-              <Link
-                to="/medicines"
-                className={`block py-2 px-4 font-bold text-gray-700 hover:text-success hover:bg-success-light rounded-full ${
-                  isActive('/medicines') ? "text-success bg-success-light" : ""
-                }`}
-                onClick={() => setIsOpen(false)}
-              >
-                Medicines
-              </Link>
-            )}
             
                          <Link
                to="/dashboard"

@@ -84,7 +84,7 @@ const Dashboard = () => {
     return ['all', ...Array.from(new Set(allProducts.map(p => p.category)))];
   };
 
-  const handleBuyClick = (productId, quantity = 1) => {
+  const handleBuyClick = async (productId, quantity = 1) => {
     // Check if user is signed in
     if (!user) {
       setNotification('Please sign in to purchase products!');
@@ -95,17 +95,37 @@ const Dashboard = () => {
       return;
     }
     
-    // Check if user has joined waitlist (has a role)
-    if (!user.role) {
-      setNotification('Please join the waitlist to purchase products!');
-      setTimeout(() => {
-        setNotification('');
-        navigate('/join-waitlist');
-      }, 2000);
-      return;
+    // Check if user has joined waitlist as "user" role
+    try {
+      const checkResponse = await axios.get(`${config.API_URL}/auth/waitlist/check`, {
+        params: {
+          email: user.email,
+          role: 'user'
+        }
+      });
+      
+      if (!checkResponse.data.joined) {
+        setNotification('Please join the waitlist as a user to add products to cart!');
+        setTimeout(() => {
+          setNotification('');
+          navigate('/join-waitlist');
+        }, 2000);
+        return;
+      }
+    } catch (error) {
+      console.error('Error checking waitlist:', error);
+      // If API fails, check if user has role set (fallback)
+      if (!user.role || user.role !== 'user') {
+        setNotification('Please join the waitlist as a user to add products to cart!');
+        setTimeout(() => {
+          setNotification('');
+          navigate('/join-waitlist');
+        }, 2000);
+        return;
+      }
     }
     
-    // If user is signed in and has joined waitlist, add to cart
+    // If user is signed in and has joined waitlist as user, add to cart
     handleAddToCart(productId, quantity);
   };
 

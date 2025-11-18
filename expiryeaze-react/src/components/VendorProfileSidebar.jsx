@@ -184,7 +184,7 @@ const VendorProfileSidebar = ({ isOpen, onOpenChange, onProfileUpdated }) => {
         {/* Form Section */}
         <form className="row g-3 mt-2">
           <div className="col-md-6">
-            <label className="form-label small fw-semibold" htmlFor="name">Name</label>
+            <label className="form-label small fw-semibold" htmlFor="name">Full Name <span className="text-muted">(First + Last)</span></label>
             <input
               type="text"
               className="form-control"
@@ -192,8 +192,16 @@ const VendorProfileSidebar = ({ isOpen, onOpenChange, onProfileUpdated }) => {
               id="name"
               value={form.name || ''}
               onChange={handleChange}
+              onBlur={(e) => {
+                const trimmed = e.target.value.trim();
+                handleChange({ target: { name: 'name', value: trimmed } });
+              }}
               disabled={!editMode}
               required
+              minLength="5"
+              pattern="^[A-Za-z]{2,}(\s+[A-Za-z]{2,})+$"
+              title="Please enter your full name with first name and last name (e.g., 'John Doe'). Each name must be at least 2 letters."
+              placeholder="e.g., John Doe"
               style={{ background: !editMode ? '#f1f3f6' : undefined }}
             />
           </div>
@@ -208,6 +216,8 @@ const VendorProfileSidebar = ({ isOpen, onOpenChange, onProfileUpdated }) => {
               onChange={handleChange}
               disabled={!editMode}
               required
+              pattern="^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9][a-zA-Z0-9.-]*[a-zA-Z0-9]\.[a-zA-Z]{2,}$"
+              title="Please enter a valid email address with proper domain (e.g., user@example.com). Domain must have a top-level domain like .com, .org, etc."
               style={{ background: !editMode ? '#f1f3f6' : undefined }}
             />
           </div>
