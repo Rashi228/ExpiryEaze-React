@@ -14,7 +14,7 @@ const router = express.Router();
 
 router.route('/')
   .get(getProducts)
-  .post(createProduct);
+  .post(authMiddleware, createProduct);
 
 // Get vendor's own products (needs to be before /:id route)
 router.route('/vendor')
@@ -22,8 +22,8 @@ router.route('/vendor')
 
 router.route('/:id')
   .get(getProductById)
-  .put(updateProduct)
-  .delete(deleteProduct);
+  .put(authMiddleware, updateProduct)
+  .delete(authMiddleware, deleteProduct);
 
 // Medicine authentication route
 router.post('/../vendors/medicine-auth', medicineAuth);

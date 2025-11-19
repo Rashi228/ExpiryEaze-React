@@ -32,6 +32,13 @@ exports.getProductById = async (req, res, next) => {
 // @access    Private (for vendors)
 exports.createProduct = async (req, res, next) => {
   try {
+    if (!req.user || !req.user.id) {
+      return res.status(401).json({
+        success: false,
+        error: 'Unauthorized: Missing user context.',
+      });
+    }
+
     // SECURITY: Validate expiry date is not in the past
     if (req.body.expiryDate) {
       const expiryDate = new Date(req.body.expiryDate);

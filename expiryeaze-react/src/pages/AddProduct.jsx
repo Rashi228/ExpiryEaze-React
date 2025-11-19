@@ -152,10 +152,13 @@ const AddProduct = () => {
     };
 
     try {
+      const token = localStorage.getItem('token');
+      const authHeaders = token ? { Authorization: `Bearer ${token}` } : {};
+
       if (isEditMode) {
-        await axios.put(`${config.API_URL}/products/${id}`, productData);
+        await axios.put(`${config.API_URL}/products/${id}`, productData, { headers: authHeaders });
       } else {
-        await axios.post(`${config.API_URL}/products`, productData);
+        await axios.post(`${config.API_URL}/products`, productData, { headers: authHeaders });
       }
       
       // Navigate to correct dashboard based on vendor section
