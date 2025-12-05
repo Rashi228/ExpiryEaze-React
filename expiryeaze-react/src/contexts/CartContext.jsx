@@ -3,6 +3,18 @@ import axios from 'axios';
 import { config } from '../lib/config';
 import { useAuth } from './AuthContext';
 
+const api = axios.create({
+  baseURL: config.API_URL,
+});
+
+api.interceptors.request.use((requestConfig) => {
+  const token = localStorage.getItem('token');
+  if (token) {
+    requestConfig.headers.Authorization = `Bearer ${token}`;
+  }
+  return requestConfig;
+});
+
 const CartContext = createContext(undefined);
 
 export const useCart = () => {
@@ -18,13 +30,12 @@ export const CartProvider = ({ children }) => {
   const [cartItems, setCartItems] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const API_URL = config.API_URL;
 
   const fetchCart = async () => {
     if (!user) return;
     setLoading(true);
     try {
-      const res = await axios.get(`${API_URL}/cart?userId=${user.id}`);
+      const res = await api.get('/cart');
       if (res.data.success && res.data.cart) {
         setCartItems(res.data.cart.items);
       }
@@ -46,10 +57,12 @@ export const CartProvider = ({ children }) => {
     }
     setLoading(true);
     try {
-      await axios.post(`${API_URL}/cart`, { userId: user.id, productId, quantity });
+      await api.post('/cart', { productId, quantity });
       await fetchCart(); // Refetch cart to get updated state
     } catch (err) {
-      setError('Failed to add item to cart.');
+      const message = err.response?.data?.error || 'Failed to add item to cart.';
+      setError(message);
+      throw new Error(message);
     } finally {
       setLoading(false);
     }
@@ -59,10 +72,10 @@ export const CartProvider = ({ children }) => {
      if (!user) return;
     setLoading(true);
     try {
-      await axios.delete(`${API_URL}/cart`, { data: { userId: user.id, itemId } });
+      await api.delete('/cart', { data: { itemId } });
       await fetchCart();
     } catch (err) {
-      setError('Failed to remove item from cart.');
+      setError(err.response?.data?.error || 'Failed to remove item from cart.');
     } finally {
       setLoading(false);
     }
@@ -81,8 +94,7 @@ export const CartProvider = ({ children }) => {
       } else {
         // Update quantity
         console.log('📝 Updating quantity via API');
-        const response = await axios.put(`${API_URL}/cart`, { 
-          userId: user.id, 
+        const response = await api.put('/cart', { 
           itemId, 
           quantity: newQuantity 
         });

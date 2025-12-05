@@ -10,8 +10,21 @@ const MAX_DAILY_PURCHASE_VALUE = 5000; // Maximum purchase value per day in doll
 // Add item to cart
 exports.addToCart = async (req, res) => {
   try {
-    const { userId, productId, quantity } = req.body;
-    
+    const userId = req.user?.id;
+    const { productId, quantity } = req.body;
+
+    if (!userId) {
+      return res.status(401).json({ success: false, error: 'Unauthorized: user context missing.' });
+    }
+    if (!productId || !quantity) {
+      return res.status(400).json({ success: false, error: 'Product and quantity are required.' });
+    }
+
+    const parsedQuantity = Number(quantity);
+    if (Number.isNaN(parsedQuantity) || parsedQuantity <= 0) {
+      return res.status(400).json({ success: false, error: 'Quantity must be a positive number.' });
+    }
+
     // SECURITY: Get product to check vendor
     const product = await Product.findById(productId).populate('vendor');
     if (!product) {
@@ -39,10 +52,10 @@ exports.addToCart = async (req, res) => {
     }
     
     const itemIndex = cart.items.findIndex(item => item.product.toString() === productId);
-    let newQuantity = quantity;
+    let newQuantity = parsedQuantity;
     
     if (itemIndex > -1) {
-      newQuantity = cart.items[itemIndex].quantity + quantity;
+      newQuantity = cart.items[itemIndex].quantity + parsedQuantity;
     }
     
     if (newQuantity > MAX_QUANTITY_PER_PRODUCT) {
@@ -65,7 +78,7 @@ exports.addToCart = async (req, res) => {
     
     const todayTotal = todayOrders.reduce((sum, order) => sum + (order.totalAmount || 0), 0);
     const productPrice = product.discountedPrice || product.price;
-    const additionalCost = quantity * productPrice;
+    const additionalCost = parsedQuantity * productPrice;
     
     if (todayTotal + additionalCost > MAX_DAILY_PURCHASE_VALUE) {
       return res.status(400).json({ 
@@ -78,7 +91,7 @@ exports.addToCart = async (req, res) => {
     if (itemIndex > -1) {
       cart.items[itemIndex].quantity = newQuantity;
     } else {
-      cart.items.push({ product: productId, quantity });
+      cart.items.push({ product: productId, quantity: parsedQuantity });
     }
     
     await cart.save();
@@ -91,7 +104,11 @@ exports.addToCart = async (req, res) => {
 // Get cart for user
 exports.getCart = async (req, res) => {
   try {
-    const { userId } = req.query;
+    const userId = req.user?.id;
+    if (!userId) {
+      return res.status(401).json({ success: false, error: 'Unauthorized: user context missing.' });
+    }
+
     const cart = await Cart.findOne({ user: userId }).populate({
       path: 'items.product',
       populate: {
@@ -108,7 +125,17 @@ exports.getCart = async (req, res) => {
 // Remove item from cart
 exports.removeFromCart = async (req, res) => {
   try {
-    const { userId, itemId } = req.body;
+    const userId = req.user?.id;
+    const { itemId } = req.body;
+
+    if (!userId) {
+      return res.status(401).json({ success: false, error: 'Unauthorized: user context missing.' });
+    }
+
+    if (!itemId) {
+      return res.status(400).json({ success: false, error: 'Item ID is required.' });
+    }
+
     const cart = await Cart.findOne({ user: userId });
     if (!cart) return res.status(404).json({ success: false, error: 'Cart not found' });
     cart.items = cart.items.filter(item => item._id.toString() !== itemId);
@@ -122,8 +149,22 @@ exports.removeFromCart = async (req, res) => {
 // Update item quantity in cart
 exports.updateQuantity = async (req, res) => {
   try {
-    const { userId, itemId, quantity } = req.body;
-    console.log('🛒 Backend updateQuantity called:', { userId, itemId, quantity });
+    const userId = req.user?.id;
+    const { itemId, quantity } = req.body;
+
+    if (!userId) {
+      return res.status(401).json({ success: false, error: 'Unauthorized: user context missing.' });
+    }
+    if (!itemId) {
+      return res.status(400).json({ success: false, error: 'Item ID is required.' });
+    }
+
+    const parsedQuantity = Number(quantity);
+    if (Number.isNaN(parsedQuantity)) {
+      return res.status(400).json({ success: false, error: 'Quantity must be a number.' });
+    }
+
+    console.log('🛒 Backend updateQuantity called:', { userId, itemId, quantity: parsedQuantity });
     
     const cart = await Cart.findOne({ user: userId });
     if (!cart) {
@@ -141,14 +182,14 @@ exports.updateQuantity = async (req, res) => {
       return res.status(404).json({ success: false, error: 'Item not found in cart' });
     }
     
-    if (quantity <= 0) {
+    if (parsedQuantity <= 0) {
       // Remove item if quantity is 0 or less
       console.log('🗑️ Removing item from cart');
       cart.items.splice(itemIndex, 1);
     } else {
       // Update quantity
-      console.log('📝 Updating quantity to:', quantity);
-      cart.items[itemIndex].quantity = quantity;
+      console.log('📝 Updating quantity to:', parsedQuantity);
+      cart.items[itemIndex].quantity = parsedQuantity;
     }
     
     await cart.save();

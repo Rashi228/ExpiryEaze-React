@@ -156,22 +156,30 @@ const MedicinesDashboard = () => {
     }, [medicines, searchTerm, selectedCity, selectedCategory, selectedPrescription, sortBy]);
 
 
-    const handleAddToCart = (medicine) => {
+    const handleAddToCart = async (medicine) => {
         if (medicine.prescriptionRequired) {
             setPrescriptionModal({ isOpen: true, medicineId: medicine._id, file: null });
-        } else {
-            addToCart(medicine._id, 1);
+            return;
+        }
+        try {
+            await addToCart(medicine._id, 1);
             showNotification('Medicine added to cart!');
+        } catch (error) {
+            showNotification(error.message || 'Failed to add medicine to cart.');
         }
     };
 
-    const handlePrescriptionSubmit = () => {
+    const handlePrescriptionSubmit = async () => {
         // In a real app, you'd handle the prescription file upload to a server here
         if (prescriptionModal.file) {
             console.log('Uploading prescription:', prescriptionModal.file.name);
-            addToCart(prescriptionModal.medicineId, 1);
-            setPrescriptionModal({ isOpen: false, medicineId: '', file: null });
-            showNotification('Medicine added to cart!');
+            try {
+                await addToCart(prescriptionModal.medicineId, 1);
+                setPrescriptionModal({ isOpen: false, medicineId: '', file: null });
+                showNotification('Medicine added to cart!');
+            } catch (error) {
+                showNotification(error.message || 'Failed to add medicine to cart.');
+            }
         } else {
             alert('Please upload a prescription file.');
         }
