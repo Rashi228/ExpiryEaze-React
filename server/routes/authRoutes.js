@@ -5,6 +5,8 @@ const {
   getMe,
   joinWaitlist,
   checkWaitlist,
+  forgotPassword,
+  resetPassword,
 } = require("../controllers/authController");
 const { authMiddleware } = require("../middleware/authMiddleware");
 const vendorController = require("../controllers/vendorController");
@@ -15,6 +17,10 @@ router.post("/login", login);
 router.get("/me", authMiddleware, getMe);
 router.post("/waitlist", joinWaitlist);
 router.get("/waitlist/check", checkWaitlist);
+
+// Password Reset
+router.post("/forgotpassword", forgotPassword);
+router.post("/resetpassword", resetPassword);
 
 // Vendor profile routes
 router.get("/vendors/profile", authMiddleware, vendorController.getProfile);

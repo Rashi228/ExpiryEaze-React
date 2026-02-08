@@ -26,10 +26,7 @@ const UserSchema = new mongoose.Schema({
     required: [true, "Please add a password"],
     minlength: [8, "Password must be at least 8 characters long"],
     // Enforce: 1 lowercase, 1 uppercase, 1 number, 1 special character
-    match: [
-      /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/,
-      "Password must contain at least 8 characters, including one uppercase letter, one lowercase letter, one number, and one special character."
-    ],
+    minlength: [8, "Password must be at least 8 characters long"],
     select: false, // Do not return password by default
   },
   role: {
@@ -99,6 +96,12 @@ const UserSchema = new mongoose.Schema({
   createdAt: {
     type: Date,
     default: Date.now,
+  },
+  resetPasswordOtp: {
+    type: String,
+  },
+  resetPasswordOtpExpire: {
+    type: Date,
   },
 });
 

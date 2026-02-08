@@ -2,6 +2,7 @@ const User = require('../models/User');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const Waitlist = require('../models/Waitlist');
+const sendEmail = require('../utils/sendEmail');
 
 // Register a new user/vendor
 exports.register = async (req, res) => {
@@ -10,7 +11,16 @@ exports.register = async (req, res) => {
     if (!name || !email || !password || !role) {
       return res.status(400).json({ success: false, error: 'All fields are required.' });
     }
-    
+
+    // Password validation regex
+    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+    if (!passwordRegex.test(password)) {
+      return res.status(400).json({
+        success: false,
+        error: 'Password must contain at least 8 characters, including one uppercase letter, one lowercase letter, one number, and one special character.'
+      });
+    }
+
     // The "Email already registered" check is good and should stay
     const existingUser = await User.findOne({ email });
     if (existingUser) {
@@ -19,7 +29,7 @@ exports.register = async (req, res) => {
     const hashedPassword = await bcrypt.hash(password, 10);
     const user = new User({ name, email, password: hashedPassword, role });
     await user.save();
-    
+
     res.status(201).json({ success: true, message: 'Registration successful.' });
   } catch (err) {
     // NEW: Check for Mongoose Validation Errors
@@ -96,5 +106,88 @@ exports.checkWaitlist = async (req, res) => {
     res.json({ joined: !!entry });
   } catch (err) {
     res.status(500).json({ joined: false, error: err.message });
+  }
+};
+
+// Forgot Password - Send OTP
+exports.forgotPassword = async (req, res) => {
+  try {
+    const { email } = req.body;
+    const user = await User.findOne({ email });
+
+    if (!user) {
+      return res.status(404).json({ success: false, error: 'User not found with this email.' });
+    }
+
+    // Generate 6-digit OTP
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+
+    // Set OTP and expiry (10 minutes)
+    user.resetPasswordOtp = otp;
+    user.resetPasswordOtpExpire = Date.now() + 10 * 60 * 1000;
+
+    await user.save({ validateBeforeSave: false });
+
+    const message = `
+      <h1>Password Reset Request</h1>
+      <p>Your OTP/Code for password reset is:</p>
+      <h2>${otp}</h2>
+      <p>This code is valid for 10 minutes.</p>
+    `;
+
+    try {
+      await sendEmail({
+        to: user.email,
+        subject: 'Password Reset OTP - ExpiryEaze',
+        html: message,
+      });
+
+      res.status(200).json({ success: true, data: 'Email sent' });
+    } catch (err) {
+      user.resetPasswordOtp = undefined;
+      user.resetPasswordOtpExpire = undefined;
+      await user.save({ validateBeforeSave: false });
+      return res.status(500).json({ success: false, error: 'Email could not be sent' });
+    }
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+};
+
+// Reset Password - Verify OTP and Set New Password
+exports.resetPassword = async (req, res) => {
+  try {
+    const { email, otp, password } = req.body;
+
+    // Password validation regex
+    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+    if (!passwordRegex.test(password)) {
+      return res.status(400).json({
+        success: false,
+        error: 'Password must contain at least 8 characters, including one uppercase letter, one lowercase letter, one number, and one special character.'
+      });
+    }
+
+    // Find user by email and check if OTP is valid and not expired
+    const user = await User.findOne({
+      email,
+      resetPasswordOtp: otp,
+      resetPasswordOtpExpire: { $gt: Date.now() },
+    });
+
+    if (!user) {
+      return res.status(400).json({ success: false, error: 'Invalid Email or OTP is invalid/expired' });
+    }
+
+    // Set new password
+    user.password = await bcrypt.hash(password, 10);
+    user.resetPasswordOtp = undefined;
+    user.resetPasswordOtpExpire = undefined;
+
+    await user.save();
+
+    res.status(200).json({ success: true, data: 'Password reset successful' });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
   }
 }; 

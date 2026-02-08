@@ -14,6 +14,7 @@ import './App.css';
 import Home from './pages/Home';
 import JoinWaitlist from './pages/JoinWaitlist';
 import Login from './pages/Login';
+import ForgotPassword from './pages/ForgotPassword';
 import Signup from './pages/Signup';
 import UserCategorySelection from './pages/UserCategorySelection';
 import VendorCategorySelection from './pages/VendorCategorySelection';
@@ -45,6 +46,7 @@ function App() {
                     <Route path="/" element={<Home />} />
                     <Route path="/join-waitlist" element={<JoinWaitlist />} />
                     <Route path="/login" element={<Login />} />
+                    <Route path="/forgot-password" element={<ForgotPassword />} />
                     <Route path="/signup" element={<Signup />} />
                     <Route path="/user-category-selection" element={<UserCategorySelection />} />
                     <Route path="/vendor-category-selection" element={<VendorCategorySelection />} />
@@ -59,7 +61,7 @@ function App() {
                     <Route path="/medicines-dashboard" element={<MedicinesDashboard />} />
                     <Route path="/user-medicines-dashboard" element={<UserMedicinesDashboard />} />
                     <Route path="/medicines" element={<UserMedicinesDashboard />} />
-        <Route path="/dashboard" element={<Dashboard />} />
+                    <Route path="/dashboard" element={<Dashboard />} />
                     <Route path="/test" element={<TestPage />} />
                     <Route path="/add-product" element={<AddProduct />} />
                     <Route path="/edit-product/:id" element={<AddProduct />} />

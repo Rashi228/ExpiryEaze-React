@@ -52,7 +52,7 @@ const Login = () => {
                       title="Please enter a valid email address with proper domain (e.g., user@example.com). Domain must have a top-level domain like .com, .org, etc."
                     />
                   </div>
-                  
+
                   <div className="mb-4">
                     <label htmlFor="password" className="form-label fw-semibold">
                       Password
@@ -67,7 +67,13 @@ const Login = () => {
                       required
                     />
                   </div>
-                  
+
+                  <div className="d-flex justify-content-end mb-3">
+                    <Link to="/forgot-password" style={{ fontSize: '0.9rem', textDecoration: 'none' }}>
+                      Forgot Password?
+                    </Link>
+                  </div>
+
                   <button
                     type="submit"
                     className="btn btn-success w-100 mb-3"
@@ -82,7 +88,7 @@ const Login = () => {
                       "Sign In"
                     )}
                   </button>
-                  
+
                   <div className="text-center">
                     <p className="text-muted mb-0">
                       Don't have an account?{' '}
