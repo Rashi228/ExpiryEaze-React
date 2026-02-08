@@ -232,8 +232,8 @@ const VendorDashboard = () => {
                           </div>
                         </td>
                         <td>{product.category}</td>
-                        <td>${product.price.toFixed(2)}</td>
-                        <td>{product.discountedPrice ? `$${product.discountedPrice.toFixed(2)}` : 'N/A'}</td>
+                        <td>₹{product.price.toFixed(2)}</td>
+                        <td>{product.discountedPrice ? `₹${product.discountedPrice.toFixed(2)}` : 'N/A'}</td>
                         <td className="fw-bold">{product.stock}</td>
                         <td>{getStockLevel(product.stock)}</td>
                         <td>{new Date(product.expiryDate).toLocaleDateString()}</td>

@@ -476,11 +476,11 @@ const UserDashboard = () => {
                     <div className="d-flex align-items-center mb-2">
                       {product.discountedPrice && product.discountedPrice < product.price ? (
                         <>
-                          <span className="fw-bold text-success fs-5 me-2">${product.discountedPrice.toFixed(2)}</span>
-                          <span className="text-muted text-decoration-line-through me-2">${product.price.toFixed(2)}</span>
+                          <span className="fw-bold text-success fs-5 me-2">₹{product.discountedPrice.toFixed(2)}</span>
+                          <span className="text-muted text-decoration-line-through me-2">₹{product.price.toFixed(2)}</span>
                         </>
                       ) : (
-                        <span className="fw-bold text-success fs-5">${product.price.toFixed(2)}</span>
+                        <span className="fw-bold text-success fs-5">₹{product.price.toFixed(2)}</span>
                       )}
                     </div>
                     <div className="d-flex align-items-center text-muted small mb-2">
@@ -598,7 +598,7 @@ const UserDashboard = () => {
                   <span className="fw-semibold">Expiry:</span> {selectedProduct.expiryDate ? new Date(selectedProduct.expiryDate).toLocaleDateString() : '-'}
                 </div>
                 <div className="mb-2">
-                  <span className="fw-semibold">Price:</span> ${selectedProduct.price?.toFixed(2)}
+                  <span className="fw-semibold">Price:</span> ₹{selectedProduct.price?.toFixed(2)}
                 </div>
                 <div className="mb-2">
                   <span className="fw-semibold">Stock:</span> {selectedProduct.stock ?? selectedProduct.quantity ?? 0}

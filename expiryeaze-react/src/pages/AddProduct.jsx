@@ -259,11 +259,11 @@ const AddProduct = () => {
 
                 <div className="row mt-3">
                   <div className="col-md-6 mb-3">
-                    <label htmlFor="price" className="form-label">Price ($)</label>
+                    <label htmlFor="price" className="form-label">Price (₹)</label>
                     <input type="number" step="0.01" className="form-control" id="price" name="price" value={product.price} onChange={handleChange} required />
                   </div>
                   <div className="col-md-6 mb-3">
-                    <label htmlFor="discountedPrice" className="form-label">Discounted Price ($) <small className="text-muted">(Optional)</small></label>
+                    <label htmlFor="discountedPrice" className="form-label">Discounted Price (₹) <small className="text-muted">(Optional)</small></label>
                     <input type="number" step="0.01" className="form-control" id="discountedPrice" name="discountedPrice" value={product.discountedPrice} onChange={handleChange} />
                   </div>
                 </div>

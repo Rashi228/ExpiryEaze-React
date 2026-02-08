@@ -37,7 +37,7 @@ const Cart = () => {
       // Calculate shipping fee based on subtotal or number of items
       const subtotal = calculateSubtotal();
       const itemCount = cartItems.length;
-      // Simple shipping calculation: $5 base + $2 per item, max $15
+      // Simple shipping calculation: ₹5 base + ₹2 per item, max ₹15
       const calculatedFee = Math.min(5 + (itemCount * 2), 15);
       setShippingFee(calculatedFee);
     } else {
@@ -246,11 +246,11 @@ const Cart = () => {
                         </div>
                                              <div className="col-md-2 text-center">
                          <div className="fw-bold text-success">
-                           ${((item.product?.discountedPrice || item.product?.price || 0) * item.quantity).toFixed(2)}
+                           ₹{((item.product?.discountedPrice || item.product?.price || 0) * item.quantity).toFixed(2)}
                          </div>
                          {item.product?.discountedPrice && (
                            <div className="text-muted text-decoration-line-through small">
-                             ${(item.product.price * item.quantity).toFixed(2)}
+                             ₹{(item.product.price * item.quantity).toFixed(2)}
                            </div>
                          )}
                        </div>
@@ -310,7 +310,7 @@ const Cart = () => {
                  
                  <div className="d-flex justify-content-between mb-3">
                    <span>Subtotal ({cartItems.length} items)</span>
-                   <span className="fw-semibold">${calculateSubtotal().toFixed(2)}</span>
+                   <span className="fw-semibold">₹{calculateSubtotal().toFixed(2)}</span>
                  </div>
                  
                  {/* Shipping Options */}
@@ -359,7 +359,7 @@ const Cart = () => {
                  <div className="d-flex justify-content-between mb-3">
                    <span>Shipping Fee</span>
                    <span className={shippingFee > 0 ? "fw-semibold text-success" : "text-success"}>
-                     {shippingFee > 0 ? `$${shippingFee.toFixed(2)}` : 'Free'}
+                     {shippingFee > 0 ? `₹${shippingFee.toFixed(2)}` : 'Free'}
                    </span>
                  </div>
                  
@@ -367,7 +367,7 @@ const Cart = () => {
                  
                  <div className="d-flex justify-content-between align-items-center mb-4">
                    <span className="fw-bold fs-5">Total</span>
-                   <span className="fw-bold fs-5 text-success">${calculateTotal().toFixed(2)}</span>
+                   <span className="fw-bold fs-5 text-success">₹{calculateTotal().toFixed(2)}</span>
                  </div>
                 
                 <button

@@ -1,52 +1,91 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useCart } from '../contexts/CartContext';
 import axios from 'axios';
 import { config } from '../lib/config';
+import RazorpayPayment from '../components/RazorpayPayment';
 
 const Checkout = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { cartItems, loading, error, clearCart } = useCart();
-  
+
   const [shippingInfo, setShippingInfo] = useState({
     address: '',
     city: '',
     postalCode: '',
     country: '',
   });
+  const [orderError, setOrderError] = useState('');
+  const [paying, setPaying] = useState(false);
 
   const handleInputChange = (e) => {
     setShippingInfo({ ...shippingInfo, [e.target.name]: e.target.value });
+    setOrderError('');
   };
 
-  const handlePlaceOrder = async (e) => {
-    e.preventDefault();
-    if (!user || cartItems.length === 0) return;
-
-    try {
-      const orderItems = cartItems.map(item => ({
-        name: item.product.name,
-        qty: item.quantity,
-        image: item.product.images?.[0] || item.product.imageUrl || '',
-        price: item.product.price,
+  // Build payload that matches backend: userId, products, totalAmount, shippingAddress (string)
+  const getOrderPayload = () => {
+    const subtotal = cartItems.reduce((sum, item) => sum + item.product.price * item.quantity, 0);
+    const shippingAddressStr = [shippingInfo.address, shippingInfo.city, shippingInfo.postalCode, shippingInfo.country].filter(Boolean).join(', ');
+    return {
+      userId: user?.id,
+      products: cartItems.map(item => ({
         product: item.product._id,
-      }));
-      
-      const subtotal = cartItems.reduce((sum, item) => sum + item.product.price * item.quantity, 0);
+        quantity: item.quantity,
+        price: item.product.price,
+      })),
+      totalAmount: subtotal,
+      shippingAddress: shippingAddressStr,
+    };
+  };
 
-      await axios.post(`${config.API_URL}/orders`, {
-        orderItems,
-        shippingAddress: shippingInfo,
-        totalPrice: subtotal,
-        user: user.id,
-      });
-      
+  const placeOrderAfterPayment = async () => {
+    const payload = getOrderPayload();
+    if (!payload.userId || !payload.shippingAddress.trim()) {
+      setOrderError('Please fill in all shipping details.');
+      return { success: false };
+    }
+    try {
+      await axios.post(`${config.API_URL}/orders`, payload);
       await clearCart();
       navigate('/checkout-success');
+      return { success: true };
     } catch (err) {
-      console.error('Failed to place order:', err);
+      const msg = err.response?.data?.error || err.message || 'Failed to place order';
+      setOrderError(msg);
+      return { success: false };
+    }
+  };
+
+  const handlePayWithRazorpay = async (handlePayment) => {
+    setOrderError('');
+    const { address, city, postalCode, country } = shippingInfo;
+    if (!address?.trim() || !city?.trim() || !postalCode?.trim() || !country?.trim()) {
+      setOrderError('Please fill in all shipping details before paying.');
+      return;
+    }
+
+    const subtotal = cartItems.reduce((sum, item) => sum + item.product.price * item.quantity, 0);
+    const amountInPaise = Math.round(subtotal * 100); // e.g. 500 → 50000 paise (₹500 INR)
+    if (amountInPaise < 100) {
+      setOrderError('Order total must be at least ₹1 (100 paise).');
+      return;
+    }
+
+    setPaying(true);
+    const result = await handlePayment(amountInPaise, {
+      name: 'ExpiryEaze',
+      description: 'Order payment',
+      prefill: { email: user?.email || '', name: user?.name || '' },
+    });
+    setPaying(false);
+
+    if (result.success) {
+      await placeOrderAfterPayment();
+    } else {
+      setOrderError(result.error || 'Payment failed or was cancelled.');
     }
   };
 
@@ -72,24 +111,40 @@ const Checkout = () => {
           <div className="card shadow-sm">
             <div className="card-body p-4">
               <h5 className="card-title fw-semibold mb-3">Shipping Information</h5>
-              <form onSubmit={handlePlaceOrder}>
+              {orderError && (
+                <div className="alert alert-danger py-2 mb-3" role="alert">
+                  {orderError}
+                </div>
+              )}
+              <form onSubmit={(e) => { e.preventDefault(); }}>
                 <div className="mb-3">
                   <label className="form-label">Address</label>
-                  <input type="text" name="address" className="form-control" onChange={handleInputChange} required />
+                  <input type="text" name="address" className="form-control" value={shippingInfo.address} onChange={handleInputChange} required />
                 </div>
                 <div className="mb-3">
                   <label className="form-label">City</label>
-                  <input type="text" name="city" className="form-control" onChange={handleInputChange} required />
+                  <input type="text" name="city" className="form-control" value={shippingInfo.city} onChange={handleInputChange} required />
                 </div>
                 <div className="mb-3">
                   <label className="form-label">Postal Code</label>
-                  <input type="text" name="postalCode" className="form-control" onChange={handleInputChange} required />
+                  <input type="text" name="postalCode" className="form-control" value={shippingInfo.postalCode} onChange={handleInputChange} required />
                 </div>
                 <div className="mb-3">
                   <label className="form-label">Country</label>
-                  <input type="text" name="country" className="form-control" onChange={handleInputChange} required />
+                  <input type="text" name="country" className="form-control" value={shippingInfo.country} onChange={handleInputChange} required />
                 </div>
-                <button type="submit" className="btn btn-success w-100 btn-lg mt-3">Place Order</button>
+                <RazorpayPayment>
+                  {({ handlePayment }) => (
+                    <button
+                      type="button"
+                      className="btn btn-success w-100 btn-lg mt-3"
+                      disabled={paying}
+                      onClick={() => handlePayWithRazorpay(handlePayment)}
+                    >
+                      {paying ? 'Opening Razorpay…' : 'Pay with Razorpay'}
+                    </button>
+                  )}
+                </RazorpayPayment>
               </form>
             </div>
           </div>
@@ -108,14 +163,14 @@ const Checkout = () => {
                           <small className="text-muted">Qty: {item.quantity}</small>
                         </div>
                      </div>
-                    <span className="fw-semibold">${(item.product.price * item.quantity).toFixed(2)}</span>
+                    <span className="fw-semibold">₹{(item.product.price * item.quantity).toFixed(2)}</span>
                   </div>
                 ))}
               </div>
               <hr />
               <div className="d-flex justify-content-between align-items-center fw-bold fs-5">
                 <span>Total</span>
-                <span>${subtotal.toFixed(2)}</span>
+                <span>₹{subtotal.toFixed(2)}</span>
               </div>
             </div>
           </div>

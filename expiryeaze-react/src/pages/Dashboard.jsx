@@ -349,11 +349,11 @@ const Dashboard = () => {
                   <div className="mb-3">
                     <div className="d-flex align-items-center gap-2">
                       <span className="fs-4 fw-bold text-success">
-                        ${(product.discountedPrice || product.price).toFixed(2)}
+                        ₹{(product.discountedPrice || product.price).toFixed(2)}
                       </span>
                       {product.discountedPrice && (
                         <span className="text-muted text-decoration-line-through">
-                          ${product.price.toFixed(2)}
+                          ₹{product.price.toFixed(2)}
                         </span>
                       )}
                     </div>
@@ -362,7 +362,7 @@ const Dashboard = () => {
                         <small className="text-muted">
                           Total for {getQuantity(product._id)}: 
                           <span className="fw-bold text-success ms-1">
-                            ${((product.discountedPrice || product.price) * getQuantity(product._id)).toFixed(2)}
+                            ₹{((product.discountedPrice || product.price) * getQuantity(product._id)).toFixed(2)}
                           </span>
                         </small>
                       </div>
@@ -491,7 +491,7 @@ const Dashboard = () => {
                   </div>
                   <div className="col-md-6">
                     <div className="mb-2">
-                      <span className="fw-semibold">Price:</span> ${selectedProduct.price?.toFixed(2)}
+                      <span className="fw-semibold">Price:</span> ₹{selectedProduct.price?.toFixed(2)}
                     </div>
                     {selectedProduct.discountedPrice && (
                       <div className="mb-2">
@@ -502,7 +502,7 @@ const Dashboard = () => {
                       <div className="mb-2">
                         <span className="fw-semibold">Total for {getQuantity(selectedProduct._id)}:</span> 
                         <span className="fw-bold text-success ms-1">
-                          ${((selectedProduct.discountedPrice || selectedProduct.price) * getQuantity(selectedProduct._id)).toFixed(2)}
+                          ₹{((selectedProduct.discountedPrice || selectedProduct.price) * getQuantity(selectedProduct._id)).toFixed(2)}
                         </span>
                       </div>
                     )}

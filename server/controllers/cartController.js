@@ -83,7 +83,7 @@ exports.addToCart = async (req, res) => {
     if (todayTotal + additionalCost > MAX_DAILY_PURCHASE_VALUE) {
       return res.status(400).json({ 
         success: false, 
-        error: `Daily purchase limit exceeded. Maximum daily purchase is $${MAX_DAILY_PURCHASE_VALUE}. This prevents bulk buying fraud.` 
+        error: `Daily purchase limit exceeded. Maximum daily purchase is ₹${MAX_DAILY_PURCHASE_VALUE}. This prevents bulk buying fraud.` 
       });
     }
 

@@ -50,6 +50,16 @@ export const config = {
     waitlist: {
       join: '/waitlist/join',
     },
+    payment: {
+      order: '/api/payment/order',
+      verify: '/api/payment/verify',
+    },
+  },
+
+  // Base URL without /api/v1 (for payment endpoints mounted at /api/payment)
+  getPaymentBaseUrl: () => {
+    const base = config.API_URL?.replace(/\/api\/v1\/?$/, '') || 'http://localhost:5001';
+    return base;
   },
   
   // Helper function to build full API URLs

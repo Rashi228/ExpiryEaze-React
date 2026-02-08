@@ -13,6 +13,7 @@ const authRoutes = require('./routes/authRoutes');
 const vendorRoutes = require('./routes/vendorRoutes');
 const reviewRoutes = require('./routes/reviewRoutes');
 const prescriptionRoutes = require('./routes/prescriptionRoutes');
+const paymentRoutes = require('./routes/paymentRoutes');
 
 // Initialize Express app
 const app = express();
@@ -48,6 +49,7 @@ app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1/vendors', vendorRoutes);
 app.use('/api/v1/reviews', reviewRoutes);
 app.use('/api/v1/prescriptions', prescriptionRoutes);
+app.use('/api/payment', paymentRoutes);
 
 const PORT = process.env.PORT || 5001;
 
