@@ -420,11 +420,11 @@ const UserMedicinesDashboard = () => {
                                 {/* Price */}
                                 <div className="mb-3">
                                     <span className="fs-4 fw-bold text-success">
-                                        ${(medicine.discountedPrice || medicine.price).toFixed(2)}
+                                        ₹{(medicine.discountedPrice || medicine.price).toFixed(2)}
                                     </span>
                                     {medicine.discountedPrice && (
                                         <span className="ms-2 text-muted text-decoration-line-through">
-                                            ${medicine.price.toFixed(2)}
+                                            ₹{medicine.price.toFixed(2)}
                                         </span>
                                     )}
                                 </div>
@@ -549,11 +549,11 @@ const UserMedicinesDashboard = () => {
                                     </div>
                                     <div className="col-md-6">
                                         <div className="mb-2">
-                                            <span className="fw-semibold">Price:</span> ${selectedMedicine.price?.toFixed(2)}
+                                            <span className="fw-semibold">Price:</span> ₹{selectedMedicine.price?.toFixed(2)}
                                         </div>
                                         {selectedMedicine.discountedPrice && (
                                             <div className="mb-2">
-                                                <span className="fw-semibold">Discounted Price:</span> ${selectedMedicine.discountedPrice.toFixed(2)}
+                                                <span className="fw-semibold">Discounted Price:</span> ₹{selectedMedicine.discountedPrice.toFixed(2)}
                                             </div>
                                         )}
                                         <div className="mb-2">

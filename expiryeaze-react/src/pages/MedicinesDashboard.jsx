@@ -312,7 +312,7 @@ const MedicinesDashboard = () => {
                                     <div className="text-primary mb-2">
                                         <i className="fas fa-dollar-sign" style={{ fontSize: '2rem' }}></i>
                                     </div>
-                                    <h3 className="card-title mb-1">${stats.totalRevenue.toFixed(0)}</h3>
+                                    <h3 className="card-title mb-1">₹{stats.totalRevenue.toFixed(0)}</h3>
                                     <p className="card-text text-muted">Total Revenue</p>
                                 </div>
                             </div>
@@ -384,7 +384,7 @@ const MedicinesDashboard = () => {
                                                     <td>
                                                         <span className="badge bg-success">{product.category}</span>
                                                     </td>
-                                                    <td>${product.price}</td>
+                                                    <td>₹{product.price}</td>
                                                     {/* Correct stock field from product.stockQuantity -> product.stock */}
                                                     <td>{product.stock}</td>
                                                     {/* Derive status: Active when in stock and not expired */}
