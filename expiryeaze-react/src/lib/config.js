@@ -3,10 +3,10 @@
 export const config = {
   // API Configuration
   API_URL: process.env.REACT_APP_API_URL || 'http://localhost:5001/api/v1',
-  
+
   // Environment
   ENV: process.env.REACT_APP_ENV || 'development',
-  
+
   // API Endpoints
   endpoints: {
     auth: {
@@ -61,7 +61,7 @@ export const config = {
     const base = config.API_URL?.replace(/\/api\/v1\/?$/, '') || 'http://localhost:5001';
     return base;
   },
-  
+
   // Helper function to build full API URLs
   buildUrl: (endpoint) => `${config.API_URL}${endpoint}`,
 };
