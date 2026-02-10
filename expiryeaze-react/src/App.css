@@ -1,3 +1,9 @@
+/* Add this to your src/App.css */
+.header-brand-logo {
+  font-size: 2rem !important; /* Force the size to 48px */
+  line-height: 1 !important;
+  display: inline-block;
+}
 .App {
   text-align: center;
 }

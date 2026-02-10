@@ -105,13 +105,13 @@ const Signup = () => {
                     />
                   </div>
                   
-                  <div className="mb-3">
+                  {/* <div className="mb-3">
                     <label className="form-label">Sign up as a:</label>
                     <select className="form-select" value={role} onChange={(e) => setRole(e.target.value)}>
                       <option value="user">User</option>
                       <option value="vendor">Vendor</option>
                     </select>
-                  </div>
+                  </div> */}
                   
                   <button
                     type="submit"
