@@ -54,7 +54,7 @@ const Header = () => {
         <div className="flex justify-between items-center">
           <Link 
             to="/" 
-            className="text-2xl font-bold text-success hover:text-success-dark transition duration-300"
+            className="header-brand-logo font-bold text-success hover:text-success-dark transition duration-300"
           >
             ExpiryEaze
           </Link>
