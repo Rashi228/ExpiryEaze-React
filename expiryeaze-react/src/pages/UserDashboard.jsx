@@ -6,6 +6,7 @@ import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import ReviewSection from '../components/ReviewSection';
 import { config } from '../lib/config';
+import { GROCERY_CATEGORIES } from '../lib/constants';
 
 const PLACEHOLDER = 'https://via.placeholder.com/300x200.png?text=No+Image';
 
@@ -39,7 +40,7 @@ const UserDashboard = () => {
       try {
         const res = await axios.get(`${config.API_URL}/products`);
         if (res.data.success) {
-          setProducts(res.data.data.filter((p) => p.category === 'groceries'));
+          setProducts(res.data.data.filter((p) => GROCERY_CATEGORIES.includes(p.category)));
         }
       } catch (err) {
         // handle error
@@ -99,13 +100,13 @@ const UserDashboard = () => {
       'Mumbai', 'Delhi', 'Bangalore', 'Hyderabad', 'Chennai', 'Kolkata',
       'Pune', 'Ahmedabad', 'Jaipur', 'Surat', 'Lucknow', 'Kanpur'
     ];
-    
+
     // Get cities from existing products
     const productCities = Array.from(new Set(products.map(p => p.city).filter(city => city)));
-    
+
     // Combine predefined cities with product cities and remove duplicates
     const allCities = [...new Set([...predefinedCities, ...productCities])];
-    
+
     return ['all', ...allCities.sort()];
   };
 
@@ -145,7 +146,7 @@ const UserDashboard = () => {
       }, 2000);
       return;
     }
-    
+
     // Check if user has joined waitlist as "user" role
     try {
       const checkResponse = await axios.get(`${config.API_URL}/auth/waitlist/check`, {
@@ -154,7 +155,7 @@ const UserDashboard = () => {
           role: 'user'
         }
       });
-      
+
       if (!checkResponse.data.joined) {
         setNotification('Please join the waitlist as a user to add products to cart!');
         setTimeout(() => {
@@ -175,7 +176,7 @@ const UserDashboard = () => {
         return;
       }
     }
-    
+
     // If user is signed in and has joined waitlist as user, add to cart
     try {
       await addToCart(productId, quantity);
@@ -184,7 +185,7 @@ const UserDashboard = () => {
       // Reset local quantity after add
       setQuantities(prev => ({ ...prev, [productId]: 1 }));
     } catch (error) {
-      setNotification('Failed to add product to cart.');
+      setNotification(error.message || 'Failed to add product to cart.');
       setTimeout(() => setNotification(''), 3000);
     }
   };
@@ -217,7 +218,7 @@ const UserDashboard = () => {
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
     return diffDays > 0 ? diffDays : 0;
   };
-  
+
   const calculateDiscountPercent = (price, discountedPrice) => {
     if (!discountedPrice || discountedPrice >= price) return 0;
     return Math.round(((price - discountedPrice) / price) * 100);
@@ -242,10 +243,9 @@ const UserDashboard = () => {
       {/* Navigation Tabs */}
       <div className="mb-4">
         <div className="nav nav-pills bg-light rounded p-1" role="tablist">
-          <button 
-            className={`nav-link d-flex align-items-center gap-2 px-4 py-2 fw-semibold ${
-              tab === 'products' ? 'active' : ''
-            }`}
+          <button
+            className={`nav-link d-flex align-items-center gap-2 px-4 py-2 fw-semibold ${tab === 'products' ? 'active' : ''
+              }`}
             style={{
               backgroundColor: tab === 'products' ? '#198754' : 'transparent',
               color: tab === 'products' ? 'white' : '#6c757d',
@@ -277,10 +277,9 @@ const UserDashboard = () => {
             <Package size={18} />
             Products
           </button>
-          <button 
-            className={`nav-link d-flex align-items-center gap-2 px-4 py-2 fw-semibold ${
-              tab === 'vendors' ? 'active' : ''
-            }`}
+          <button
+            className={`nav-link d-flex align-items-center gap-2 px-4 py-2 fw-semibold ${tab === 'vendors' ? 'active' : ''
+              }`}
             style={{
               backgroundColor: tab === 'vendors' ? '#198754' : 'transparent',
               color: tab === 'vendors' ? 'white' : '#6c757d',
@@ -319,32 +318,32 @@ const UserDashboard = () => {
       {tab === 'products' && (
         <div className="card shadow-sm mb-4">
           <div className="card-body d-flex flex-wrap gap-3 align-items-center">
-            <div className="input-group flex-grow-1" style={{minWidth: '200px'}}>
+            <div className="input-group flex-grow-1" style={{ minWidth: '200px' }}>
               <span className="input-group-text bg-white"><Search size={18} /></span>
-              <input 
-                type="text" 
-                className="form-control" 
+              <input
+                type="text"
+                className="form-control"
                 placeholder="Search products..."
                 value={searchTerm}
                 onChange={e => setSearchTerm(e.target.value)}
               />
             </div>
-            <select className="form-select" style={{width: 'auto'}} value={selectedCity} onChange={e => setSelectedCity(e.target.value)}>
+            <select className="form-select" style={{ width: 'auto' }} value={selectedCity} onChange={e => setSelectedCity(e.target.value)}>
               <option key="all-cities" value="all">All Cities</option>
               {getCities().map(city => <option key={city} value={city}>{city}</option>)}
             </select>
-            <select className="form-select" style={{width: 'auto'}} value={selectedVendorId} onChange={e => setSelectedVendorId(e.target.value)}>
+            <select className="form-select" style={{ width: 'auto' }} value={selectedVendorId} onChange={e => setSelectedVendorId(e.target.value)}>
               <option key="all-vendors" value="all">All Vendors</option>
               {getVendors().map(vendor => <option key={vendor.id} value={vendor.id}>{vendor.name}</option>)}
             </select>
-            <select className="form-select" style={{width: 'auto'}} value={sortOrder} onChange={e => setSortOrder(e.target.value)}>
+            <select className="form-select" style={{ width: 'auto' }} value={sortOrder} onChange={e => setSortOrder(e.target.value)}>
               <option key="sort-name" value="name">Sort by Name</option>
               <option key="sort-price-asc" value="price_asc">Sort by Price (Low to High)</option>
               <option key="sort-price-desc" value="price_desc">Sort by Price (High to Low)</option>
               <option key="sort-expiry-asc" value="expiry_asc">Sort by Expiry (Soonest)</option>
             </select>
             <span className="text-muted fw-semibold">{filteredAndSortedProducts.length} found</span>
-            <button 
+            <button
               className="btn btn-outline-secondary btn-sm"
               onClick={() => {
                 setSearchTerm('');
@@ -367,83 +366,83 @@ const UserDashboard = () => {
           ) : (
             <div className="row g-4">
               {vendors.map(({ vendor, products }) => (
-                                 <div className="col-md-6 col-lg-4" key={vendor._id}>
-                   <div className="card shadow-sm">
-                     <div className="card-body p-3">
-                       <div className="text-center mb-2">
-                         <div className="bg-success bg-opacity-10 rounded-circle d-inline-flex align-items-center justify-content-center mb-2" 
-                              style={{ width: '60px', height: '60px' }}>
-                           <Building size={24} className="text-success" />
-                         </div>
-                         <h6 className="fw-bold mb-1">{vendor.name}</h6>
-                         <p className="text-muted small mb-2">{vendor.email}</p>
-                       </div>
-                       
-                       <div className="mb-2">
-                         <div className="d-flex justify-content-between align-items-center mb-1">
-                           <span className="text-muted small">Products:</span>
-                           <span className="fw-semibold small">{products.length}</span>
-                         </div>
-                         <div className="d-flex justify-content-between align-items-center mb-1">
-                           <span className="text-muted small">Location:</span>
-                           <span className="fw-semibold small">{vendor.city || 'N/A'}</span>
-                         </div>
-                         <div className="d-flex justify-content-between align-items-center mb-1">
-                           <span className="text-muted small">Phone:</span>
-                           <span className="fw-semibold small">{vendor.phone || 'N/A'}</span>
-                         </div>
-                         <div className="d-flex justify-content-between align-items-center">
-                           <span className="text-muted small">Category:</span>
-                           <span className="badge bg-success small">{vendor.category || 'General'}</span>
-                         </div>
-                       </div>
+                <div className="col-md-6 col-lg-4" key={vendor._id}>
+                  <div className="card shadow-sm">
+                    <div className="card-body p-3">
+                      <div className="text-center mb-2">
+                        <div className="bg-success bg-opacity-10 rounded-circle d-inline-flex align-items-center justify-content-center mb-2"
+                          style={{ width: '60px', height: '60px' }}>
+                          <Building size={24} className="text-success" />
+                        </div>
+                        <h6 className="fw-bold mb-1">{vendor.name}</h6>
+                        <p className="text-muted small mb-2">{vendor.email}</p>
+                      </div>
 
-                       {vendor.description && (
-                         <p className="text-muted small mb-2">{vendor.description}</p>
-                       )}
+                      <div className="mb-2">
+                        <div className="d-flex justify-content-between align-items-center mb-1">
+                          <span className="text-muted small">Products:</span>
+                          <span className="fw-semibold small">{products.length}</span>
+                        </div>
+                        <div className="d-flex justify-content-between align-items-center mb-1">
+                          <span className="text-muted small">Location:</span>
+                          <span className="fw-semibold small">{vendor.city || 'N/A'}</span>
+                        </div>
+                        <div className="d-flex justify-content-between align-items-center mb-1">
+                          <span className="text-muted small">Phone:</span>
+                          <span className="fw-semibold small">{vendor.phone || 'N/A'}</span>
+                        </div>
+                        <div className="d-flex justify-content-between align-items-center">
+                          <span className="text-muted small">Category:</span>
+                          <span className="badge bg-success small">{vendor.category || 'General'}</span>
+                        </div>
+                      </div>
 
-                       <div className="d-grid gap-1">
-                         <button
-                           className="btn btn-outline-primary btn-sm"
-                           onClick={() => {
-                             setSelectedVendor(vendor);
-                             setTab('products');
-                             setSelectedVendorId(vendor._id);
-                             setSearchTerm(''); // Clear search term
-                           }}
-                         >
-                           Browse Products
-                         </button>
-                         <button
-                           className="btn btn-outline-secondary btn-sm"
-                           onClick={() => {
-                             alert(`Contact ${vendor.name}:\nEmail: ${vendor.email}\nPhone: ${vendor.phone || 'N/A'}\nLocation: ${vendor.city || 'N/A'}`);
-                           }}
-                         >
-                           Contact
-                         </button>
-                         <button
-                           className="btn btn-outline-success btn-sm"
-                           onClick={() => {
-                             setExpandedVendor(expandedVendor === vendor._id ? null : vendor._id);
-                           }}
-                         >
-                           {expandedVendor === vendor._id ? 'Hide Reviews' : 'View Reviews'}
-                         </button>
-                       </div>
-                     </div>
-                   </div>
-                   
-                   {/* Expanded Reviews Section */}
-                   {expandedVendor === vendor._id && (
-                     <div className="mt-2">
-                       <ReviewSection 
-                         vendorId={vendor._id} 
-                         vendorName={vendor.name} 
-                       />
-                     </div>
-                   )}
-                 </div>
+                      {vendor.description && (
+                        <p className="text-muted small mb-2">{vendor.description}</p>
+                      )}
+
+                      <div className="d-grid gap-1">
+                        <button
+                          className="btn btn-outline-primary btn-sm"
+                          onClick={() => {
+                            setSelectedVendor(vendor);
+                            setTab('products');
+                            setSelectedVendorId(vendor._id);
+                            setSearchTerm(''); // Clear search term
+                          }}
+                        >
+                          Browse Products
+                        </button>
+                        <button
+                          className="btn btn-outline-secondary btn-sm"
+                          onClick={() => {
+                            alert(`Contact ${vendor.name}:\nEmail: ${vendor.email}\nPhone: ${vendor.phone || 'N/A'}\nLocation: ${vendor.city || 'N/A'}`);
+                          }}
+                        >
+                          Contact
+                        </button>
+                        <button
+                          className="btn btn-outline-success btn-sm"
+                          onClick={() => {
+                            setExpandedVendor(expandedVendor === vendor._id ? null : vendor._id);
+                          }}
+                        >
+                          {expandedVendor === vendor._id ? 'Hide Reviews' : 'View Reviews'}
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Expanded Reviews Section */}
+                  {expandedVendor === vendor._id && (
+                    <div className="mt-2">
+                      <ReviewSection
+                        vendorId={vendor._id}
+                        vendorName={vendor.name}
+                      />
+                    </div>
+                  )}
+                </div>
               ))}
             </div>
           )}
@@ -458,11 +457,11 @@ const UserDashboard = () => {
               <div key={product._id} className="col">
                 <div className="card h-100 shadow-sm border-0">
                   <div className="position-relative">
-                    <img 
-                      src={product.images?.[0] || product.imageUrl || PLACEHOLDER} 
-                      className="card-img-top" 
-                      alt={product.name} 
-                      style={{ height: '200px', objectFit: 'cover' }} 
+                    <img
+                      src={product.images?.[0] || product.imageUrl || PLACEHOLDER}
+                      className="card-img-top"
+                      alt={product.name}
+                      style={{ height: '200px', objectFit: 'cover' }}
                     />
                     {calculateDiscountPercent(product.price, product.discountedPrice) > 0 && (
                       <span className="badge bg-danger position-absolute top-0 end-0 m-2">
@@ -513,21 +512,21 @@ const UserDashboard = () => {
                         </button>
                       </div>
                       <div className="d-flex gap-2">
-                      <button 
-                        className="btn btn-outline-primary btn-sm flex-grow-1"
-                        onClick={() => openProductModal(product)}
-                      >
-                        View Details
-                      </button>
-                      <button 
-                        className={`btn btn-sm flex-grow-1 ${cartItems.some(ci => ci.product && ci.product._id === product._id) ? 'btn-secondary' : 'btn-success'}`}
-                        disabled={cartItems.some(ci => ci.product && ci.product._id === product._id)}
-                        onClick={() => handleAddToCart(product._id, getQuantity(product._id))}
-                      >
-                        {cartItems.some(ci => ci.product && ci.product._id === product._id)
-                          ? 'In Cart'
-                          : `Add ${getQuantity(product._id)} to Cart`}
-                      </button>
+                        <button
+                          className="btn btn-outline-primary btn-sm flex-grow-1"
+                          onClick={() => openProductModal(product)}
+                        >
+                          View Details
+                        </button>
+                        <button
+                          className={`btn btn-sm flex-grow-1 ${cartItems.some(ci => ci.product && ci.product._id === product._id) ? 'btn-secondary' : 'btn-success'}`}
+                          disabled={cartItems.some(ci => ci.product && ci.product._id === product._id)}
+                          onClick={() => handleAddToCart(product._id, getQuantity(product._id))}
+                        >
+                          {cartItems.some(ci => ci.product && ci.product._id === product._id)
+                            ? 'In Cart'
+                            : `Add ${getQuantity(product._id)} to Cart`}
+                        </button>
                       </div>
                     </div>
                   </div>
@@ -539,12 +538,12 @@ const UserDashboard = () => {
               <p className="text-muted fs-4">No products found matching your criteria.</p>
             </div>
           )}
-                 </div>
-       )}
+        </div>
+      )}
 
 
-       
-       {/* Product Details Modal */}
+
+      {/* Product Details Modal */}
       {selectedProduct && modalOpen && (
         <div className="modal show fade d-block" tabIndex={-1} role="dialog" style={{ background: 'rgba(0,0,0,0.4)' }}>
           <div className="modal-dialog modal-lg modal-dialog-centered" role="document">
@@ -627,7 +626,7 @@ const UserDashboard = () => {
                       <div key={review.id || index} className="list-group-item list-group-item-action">
                         <strong>{review.user?.name || 'Anonymous'}:</strong> <q>{review.comment}</q>
                         <div>
-                          {[...Array(5)].map((_, i) => <Star key={i} size={14} fill={i < review.rating ? '#f59e0b' : '#d1d5db'} strokeWidth={0}/>)}
+                          {[...Array(5)].map((_, i) => <Star key={i} size={14} fill={i < review.rating ? '#f59e0b' : '#d1d5db'} strokeWidth={0} />)}
                         </div>
                       </div>
                     )) : <p className="text-muted">No reviews yet.</p>}

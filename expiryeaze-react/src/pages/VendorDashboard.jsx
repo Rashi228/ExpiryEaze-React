@@ -5,6 +5,7 @@ import axios from 'axios';
 import { config } from '../lib/config';
 import { PlusCircle, Edit, Trash2, Eye, Menu, AlertCircle } from 'lucide-react';
 import VendorProfileSidebar from '../components/VendorProfileSidebar';
+import { GROCERY_CATEGORIES } from '../lib/constants';
 
 const VendorDashboard = () => {
   const navigate = useNavigate();
@@ -28,14 +29,14 @@ const VendorDashboard = () => {
     setError(null);
     try {
       const res = await axios.get(`${config.API_URL}/products`);
-      
+
       if (res.data.success) {
         const vendorProducts = res.data.data.filter((product) => {
           const vendor = product.vendor;
-          const isVendorProduct = vendor && typeof vendor === 'object' 
-            ? vendor._id === user?.id 
+          const isVendorProduct = vendor && typeof vendor === 'object'
+            ? vendor._id === user?.id
             : vendor === user?.id;
-          const isGroceriesProduct = product.category === 'groceries';
+          const isGroceriesProduct = GROCERY_CATEGORIES.includes(product.category);
           return isVendorProduct && isGroceriesProduct;
         });
         setProducts(vendorProducts);
@@ -60,8 +61,8 @@ const VendorDashboard = () => {
       setProfileLoading(true);
       try {
         const token = localStorage.getItem('token');
-        const res = await axios.get(`${config.API_URL}/vendors/profile`, { 
-          headers: { Authorization: `Bearer ${token}` } 
+        const res = await axios.get(`${config.API_URL}/vendors/profile`, {
+          headers: { Authorization: `Bearer ${token}` }
         });
         setProfile(res.data.profile);
       } catch (err) {
@@ -103,12 +104,12 @@ const VendorDashboard = () => {
 
   const handleAddProductClick = () => {
     if (profileLoading) return;
-    
+
     if (!profile || !profile.profileCompleted) {
       setShowProfileModal(true);
       return;
     }
-    
+
     navigate('/add-product');
   };
 
@@ -121,7 +122,7 @@ const VendorDashboard = () => {
     }
     return <span className="badge bg-success">High</span>;
   };
-  
+
   const calculateDiscountPercent = (price, discountedPrice) => {
     return Math.round(((price - discountedPrice) / price) * 100);
   };
@@ -207,8 +208,8 @@ const VendorDashboard = () => {
                 </thead>
                 <tbody>
                   {products.map(product => {
-                    const discountPercent = product.discountedPrice && product.discountedPrice < product.price 
-                      ? calculateDiscountPercent(product.price, product.discountedPrice) 
+                    const discountPercent = product.discountedPrice && product.discountedPrice < product.price
+                      ? calculateDiscountPercent(product.price, product.discountedPrice)
                       : null;
 
                     return (

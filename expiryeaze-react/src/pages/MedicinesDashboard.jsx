@@ -4,6 +4,7 @@ import { useCart } from '../contexts/CartContext';
 import axios from 'axios';
 import { config } from '../lib/config';
 import { Star, Heart, CalendarCheck2, MapPin, Building, Search, ArrowLeft, Eye, Filter, Trash2 } from 'lucide-react';
+import { MEDICINE_CATEGORIES } from '../lib/constants';
 import VendorProfileSidebar from '../components/VendorProfileSidebar';
 
 const PLACEHOLDER = 'https://via.placeholder.com/300x200.png?text=No+Image';
@@ -41,7 +42,7 @@ const MedicinesDashboard = () => {
             try {
                 const res = await axios.get(`${config.API_URL}/products`);
                 if (res.data.success) {
-                    const fetchedMedicines = res.data.data.filter((p) => p.category === 'medicines');
+                    const fetchedMedicines = res.data.data.filter((p) => MEDICINE_CATEGORIES.includes(p.category));
                     setMedicines(fetchedMedicines);
                 } else {
                     setError('Failed to fetch medicines.');
@@ -64,8 +65,8 @@ const MedicinesDashboard = () => {
         setProfileLoading(true);
         try {
             const token = localStorage.getItem('token');
-            const res = await axios.get(`${config.API_URL}/vendors/profile`, { 
-                headers: { Authorization: `Bearer ${token}` } 
+            const res = await axios.get(`${config.API_URL}/vendors/profile`, {
+                headers: { Authorization: `Bearer ${token}` }
             });
             setProfile(res.data.profile);
         } catch (err) {
@@ -79,11 +80,11 @@ const MedicinesDashboard = () => {
         setProductsLoading(true);
         try {
             const token = localStorage.getItem('token');
-            const res = await axios.get(`${config.API_URL}/products/vendor`, { 
-                headers: { Authorization: `Bearer ${token}` } 
+            const res = await axios.get(`${config.API_URL}/products/vendor`, {
+                headers: { Authorization: `Bearer ${token}` }
             });
             // Filter to show only medicines from this vendor
-            const vendorMedicines = (res.data.products || []).filter(product => product.category === 'medicines');
+            const vendorMedicines = (res.data.products || []).filter(product => MEDICINE_CATEGORIES.includes(product.category));
             setProducts(vendorMedicines);
             // Update stats from products list for now (server-side aggregation can replace this later)
             const totalProducts = vendorMedicines.length;
@@ -184,7 +185,7 @@ const MedicinesDashboard = () => {
             alert('Please upload a prescription file.');
         }
     };
-    
+
     const getCities = () => ['all', ...Array.from(new Set(medicines.map(p => p.city)))];
     const getCategories = () => ['all', ...Array.from(new Set(medicines.map(p => p.subCategory)))]; // Assumes subCategory
 
@@ -230,9 +231,9 @@ const MedicinesDashboard = () => {
             </button>
 
             {/* Profile Sidebar */}
-            <VendorProfileSidebar 
-                isOpen={sidebarOpen} 
-                onOpenChange={setSidebarOpen} 
+            <VendorProfileSidebar
+                isOpen={sidebarOpen}
+                onOpenChange={setSidebarOpen}
                 onProfileUpdated={handleProfileUpdated}
             />
 
@@ -262,7 +263,7 @@ const MedicinesDashboard = () => {
                         <div className="alert alert-warning mb-4">
                             <i className="fas fa-exclamation-triangle me-2"></i>
                             <strong>Profile Incomplete:</strong> Please complete your vendor profile to add medicine products.
-                            <button 
+                            <button
                                 className="btn btn-sm btn-warning ms-3"
                                 onClick={() => setSidebarOpen(true)}
                             >
@@ -369,8 +370,8 @@ const MedicinesDashboard = () => {
                                                 <tr key={product._id}>
                                                     <td>
                                                         <div className="d-flex align-items-center">
-                                                            <img 
-                                                                src={product.image || '/placeholder.jpg'} 
+                                                            <img
+                                                                src={product.image || '/placeholder.jpg'}
                                                                 alt={product.name}
                                                                 className="rounded me-3"
                                                                 style={{ width: '50px', height: '50px', objectFit: 'cover' }}

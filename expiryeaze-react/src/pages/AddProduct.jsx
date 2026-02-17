@@ -4,6 +4,7 @@ import axios from 'axios';
 import { config } from '../lib/config';
 import { useAuth } from '../contexts/AuthContext';
 import ImageUpload from '../components/ImageUpload';
+import { GROCERY_OPTIONS, MEDICINE_OPTIONS } from '../lib/constants';
 
 // NOTE: Make sure to add a route for this page in your router (e.g., <Route path="/add-product" element={<AddProduct />} />)
 
@@ -12,7 +13,7 @@ const AddProduct = () => {
   const isEditMode = Boolean(id);
   const navigate = useNavigate();
   const { user } = useAuth();
-  
+
   const [product, setProduct] = useState({
     name: '',
     description: '',
@@ -23,7 +24,7 @@ const AddProduct = () => {
     category: '',
     requiresPrescription: false,
   });
-  
+
   const [images, setImages] = useState([]);
   const [expiryPhoto, setExpiryPhoto] = useState('');
   const [loading, setLoading] = useState(false);
@@ -35,34 +36,12 @@ const AddProduct = () => {
   useEffect(() => {
     const storedVendorCategory = localStorage.getItem('vendorCategory');
     setVendorSection(storedVendorCategory);
-    
+
     if (storedVendorCategory === 'groceries') {
-      setAvailableCategories([
-        { value: 'groceries', label: 'Groceries' },
-        { value: 'dairy', label: 'Dairy' },
-        { value: 'bakery', label: 'Bakery' },
-        { value: 'beverages', label: 'Beverages' },
-        { value: 'snacks', label: 'Snacks' },
-        { value: 'fruits', label: 'Fruits' },
-        { value: 'vegetables', label: 'Vegetables' },
-        { value: 'meat', label: 'Meat & Poultry' },
-        { value: 'seafood', label: 'Seafood' },
-        { value: 'frozen', label: 'Frozen Foods' },
-        { value: 'canned', label: 'Canned Foods' },
-        { value: 'condiments', label: 'Condiments & Spices' }
-      ]);
+      setAvailableCategories(GROCERY_OPTIONS);
       setProduct(prev => ({ ...prev, category: 'groceries' }));
     } else if (storedVendorCategory === 'medicines') {
-      setAvailableCategories([
-        { value: 'medicines', label: 'Medicines' },
-        { value: 'prescription', label: 'Prescription Drugs' },
-        { value: 'otc', label: 'Over-the-Counter' },
-        { value: 'supplements', label: 'Supplements' },
-        { value: 'medical-devices', label: 'Medical Devices' },
-        { value: 'personal-care', label: 'Personal Care' },
-        { value: 'baby-care', label: 'Baby Care' },
-        { value: 'first-aid', label: 'First Aid' }
-      ]);
+      setAvailableCategories(MEDICINE_OPTIONS);
       setProduct(prev => ({ ...prev, category: 'medicines' }));
     } else {
       // Fallback: if no vendor category is stored, redirect to category selection
@@ -108,9 +87,9 @@ const AddProduct = () => {
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
-    setProduct(prev => ({ 
-      ...prev, 
-      [name]: type === 'checkbox' ? checked : value 
+    setProduct(prev => ({
+      ...prev,
+      [name]: type === 'checkbox' ? checked : value
     }));
   };
 
@@ -118,7 +97,7 @@ const AddProduct = () => {
     e.preventDefault();
     setLoading(true);
     setError(null);
-    
+
     if (!user) {
       setError('You must be logged in.');
       setLoading(false);
@@ -160,7 +139,7 @@ const AddProduct = () => {
       } else {
         await axios.post(`${config.API_URL}/products`, productData, { headers: authHeaders });
       }
-      
+
       // Navigate to correct dashboard based on vendor section
       const vendorSection = localStorage.getItem('vendorCategory');
       if (vendorSection === 'medicines') {
@@ -203,11 +182,11 @@ const AddProduct = () => {
                       </span>
                     )}
                   </label>
-                  <select 
-                    className="form-select" 
-                    id="category" 
-                    name="category" 
-                    value={product.category} 
+                  <select
+                    className="form-select"
+                    id="category"
+                    name="category"
+                    value={product.category}
                     onChange={handleChange}
                     required
                   >
@@ -249,9 +228,9 @@ const AddProduct = () => {
                     </div>
                   </div>
                 )}
-                
-                <ImageUpload 
-                  onImagesChange={setImages} 
+
+                <ImageUpload
+                  onImagesChange={setImages}
                   onExpiryPhotoChange={setExpiryPhoto}
                   existingImages={images}
                   existingExpiryPhoto={expiryPhoto}

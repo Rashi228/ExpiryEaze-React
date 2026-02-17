@@ -67,7 +67,7 @@ const Signup = () => {
                       placeholder="e.g., John Doe"
                     />
                   </div>
-                  
+
                   <div className="mb-3">
                     <label htmlFor="email" className="form-label fw-semibold">
                       Email
@@ -85,7 +85,7 @@ const Signup = () => {
                       title="Please enter a valid email address with proper domain (e.g., user@example.com). Domain must have a top-level domain like .com, .org, etc."
                     />
                   </div>
-                  
+
                   <div className="mb-3">
                     <label htmlFor="password" className="form-label fw-semibold">
                       Password
@@ -104,15 +104,15 @@ const Signup = () => {
                       title="Must be at least 8 characters, including one uppercase, one lowercase, one number, and one special character (@$!%*?&)." // Explain the error
                     />
                   </div>
-                  
-                  {/* <div className="mb-3">
+
+                  {<div className="mb-3">
                     <label className="form-label">Sign up as a:</label>
                     <select className="form-select" value={role} onChange={(e) => setRole(e.target.value)}>
                       <option value="user">User</option>
                       <option value="vendor">Vendor</option>
                     </select>
-                  </div> */}
-                  
+                  </div>}
+
                   <button
                     type="submit"
                     className="btn btn-success w-100 mb-3"
@@ -127,7 +127,7 @@ const Signup = () => {
                       "Create Account"
                     )}
                   </button>
-                  
+
                   <div className="text-center">
                     <p className="text-muted mb-0">
                       Already have an account?{' '}

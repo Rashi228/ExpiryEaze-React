@@ -4,6 +4,7 @@ import { useCart } from '../contexts/CartContext';
 import axios from 'axios';
 import { config } from '../lib/config';
 import { Star, Heart, CalendarCheck2, MapPin, Building, Search, Filter, ShoppingCart } from 'lucide-react';
+import { MEDICINE_CATEGORIES } from '../lib/constants';
 
 const PLACEHOLDER = 'https://via.placeholder.com/300x200.png?text=No+Image';
 
@@ -40,7 +41,7 @@ const UserMedicinesDashboard = () => {
         try {
             const res = await axios.get(`${config.API_URL}/products`);
             if (res.data.success) {
-                const fetchedMedicines = res.data.data.filter((p) => p.category === 'medicines');
+                const fetchedMedicines = res.data.data.filter((p) => MEDICINE_CATEGORIES.includes(p.category));
                 setMedicines(fetchedMedicines);
             } else {
                 setError('Failed to fetch medicines.');
@@ -58,8 +59,8 @@ const UserMedicinesDashboard = () => {
             const res = await axios.get(`${config.API_URL}/vendors/all-with-products`);
             if (res.data.success) {
                 // Filter vendors who have medicines
-                const medicineVendors = res.data.data.filter(vendorData => 
-                    vendorData.products.some(product => product.category === 'medicines')
+                const medicineVendors = res.data.data.filter(vendorData =>
+                    vendorData.products.some(product => MEDICINE_CATEGORIES.includes(product.category))
                 );
                 setVendors(medicineVendors);
             }
@@ -126,7 +127,7 @@ const UserMedicinesDashboard = () => {
             setTimeout(() => setNotification(''), 3000);
             setQuantities(prev => ({ ...prev, [medicineId]: 1 }));
         } catch (error) {
-            setNotification('Failed to add medicine to cart.');
+            setNotification(error.message || 'Failed to add medicine to cart.');
             setTimeout(() => setNotification(''), 3000);
         }
     };
@@ -175,7 +176,7 @@ const UserMedicinesDashboard = () => {
                     {notification}
                 </div>
             )}
-            
+
             <div className="d-flex justify-content-between align-items-center mb-4">
                 <div>
                     <h1 className="fw-bold fs-2 mb-1">Medicine Marketplace</h1>
@@ -196,9 +197,9 @@ const UserMedicinesDashboard = () => {
                                 <span className="input-group-text bg-white">
                                     <Search size={18} />
                                 </span>
-                                <input 
-                                    type="text" 
-                                    className="form-control" 
+                                <input
+                                    type="text"
+                                    className="form-control"
                                     placeholder="Search medicines..."
                                     value={searchTerm}
                                     onChange={e => setSearchTerm(e.target.value)}
@@ -206,33 +207,33 @@ const UserMedicinesDashboard = () => {
                             </div>
                         </div>
                         <div className="col-md-2">
-                            <select 
-                                className="form-select" 
-                                value={selectedCity} 
+                            <select
+                                className="form-select"
+                                value={selectedCity}
                                 onChange={e => setSelectedCity(e.target.value)}
                             >
                                 <option value="all">All Cities</option>
-                                {getCities().map(city => 
+                                {getCities().map(city =>
                                     <option key={city} value={city}>{city}</option>
                                 )}
                             </select>
                         </div>
                         <div className="col-md-2">
-                            <select 
-                                className="form-select" 
-                                value={selectedCategory} 
+                            <select
+                                className="form-select"
+                                value={selectedCategory}
                                 onChange={e => setSelectedCategory(e.target.value)}
                             >
                                 <option value="all">All Categories</option>
-                                {getCategories().map(category => 
+                                {getCategories().map(category =>
                                     <option key={category} value={category}>{category}</option>
                                 )}
                             </select>
                         </div>
                         <div className="col-md-2">
-                            <select 
-                                className="form-select" 
-                                value={sortOrder} 
+                            <select
+                                className="form-select"
+                                value={sortOrder}
                                 onChange={e => setSortOrder(e.target.value)}
                             >
                                 <option value="name">Sort by Name</option>
@@ -275,7 +276,7 @@ const UserMedicinesDashboard = () => {
                     </div>
                 ) : vendors.length === 0 ? (
                     <div className="text-center py-4">
-                        <div className="bg-light rounded-circle d-flex align-items-center justify-content-center mx-auto mb-3" style={{width: '80px', height: '80px'}}>
+                        <div className="bg-light rounded-circle d-flex align-items-center justify-content-center mx-auto mb-3" style={{ width: '80px', height: '80px' }}>
                             <Building size={40} className="text-muted" />
                         </div>
                         <h6 className="text-muted">No Medicine Vendors Available</h6>
@@ -284,50 +285,50 @@ const UserMedicinesDashboard = () => {
                 ) : (
                     <div className="row g-3 mb-4">
                         {vendors.map(({ vendor, products }) => (
-                        <div key={vendor._id} className="col-md-6 col-lg-4">
-                            <div className="card h-100 shadow-sm">
-                                <div className="card-body">
-                                    <div className="d-flex align-items-center mb-3">
-                                        <div className="bg-success bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center me-3" style={{width: '50px', height: '50px'}}>
-                                            <Building size={24} className="text-success" />
+                            <div key={vendor._id} className="col-md-6 col-lg-4">
+                                <div className="card h-100 shadow-sm">
+                                    <div className="card-body">
+                                        <div className="d-flex align-items-center mb-3">
+                                            <div className="bg-success bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center me-3" style={{ width: '50px', height: '50px' }}>
+                                                <Building size={24} className="text-success" />
+                                            </div>
+                                            <div>
+                                                <h6 className="mb-1 fw-bold">{vendor.name}</h6>
+                                                <small className="text-muted">{vendor.email}</small>
+                                            </div>
                                         </div>
-                                        <div>
-                                            <h6 className="mb-1 fw-bold">{vendor.name}</h6>
-                                            <small className="text-muted">{vendor.email}</small>
+                                        <div className="mb-3">
+                                            <span className="badge bg-success me-2">{products.filter(p => MEDICINE_CATEGORIES.includes(p.category)).length} Medicines</span>
+                                            <span className="badge bg-info">{vendor.location || vendor.city || 'Location N/A'}</span>
                                         </div>
-                                    </div>
-                                    <div className="mb-3">
-                                        <span className="badge bg-success me-2">{products.filter(p => p.category === 'medicines').length} Medicines</span>
-                                        <span className="badge bg-info">{vendor.location || vendor.city || 'Location N/A'}</span>
-                                    </div>
-                                    <div className="d-grid gap-2">
-                                        <button
-                                            className={`btn btn-sm ${selectedVendor && selectedVendor._id === vendor._id ? 'btn-primary' : 'btn-outline-primary'}`}
-                                            onClick={() => {
-                                                // Toggle: if same vendor is selected, deselect it (hide products)
-                                                // Otherwise, select this vendor (show their products)
-                                                if (selectedVendor && selectedVendor._id === vendor._id) {
-                                                    setSelectedVendor(null);
-                                                    setShowAllProducts(false); // Hide products when deselecting
-                                                } else {
-                                                    setSelectedVendor(vendor);
-                                                    setShowAllProducts(false); // Don't show all when selecting specific vendor
+                                        <div className="d-grid gap-2">
+                                            <button
+                                                className={`btn btn-sm ${selectedVendor && selectedVendor._id === vendor._id ? 'btn-primary' : 'btn-outline-primary'}`}
+                                                onClick={() => {
+                                                    // Toggle: if same vendor is selected, deselect it (hide products)
+                                                    // Otherwise, select this vendor (show their products)
+                                                    if (selectedVendor && selectedVendor._id === vendor._id) {
+                                                        setSelectedVendor(null);
+                                                        setShowAllProducts(false); // Hide products when deselecting
+                                                    } else {
+                                                        setSelectedVendor(vendor);
+                                                        setShowAllProducts(false); // Don't show all when selecting specific vendor
+                                                    }
+                                                }}
+                                            >
+                                                {selectedVendor && selectedVendor._id === vendor._id
+                                                    ? `Hide ${vendor.name}'s Medicines`
+                                                    : `View ${vendor.name}'s Medicines`
                                                 }
-                                            }}
-                                        >
-                                            {selectedVendor && selectedVendor._id === vendor._id 
-                                                ? `Hide ${vendor.name}'s Medicines` 
-                                                : `View ${vendor.name}'s Medicines`
-                                            }
-                                        </button>
+                                            </button>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
-                        </div>
-                    ))}
+                        ))}
                     </div>
                 )}
-                
+
                 {/* Removed chip list to declutter; use the single "Browse All Vendor Products" button above */}
             </div>
 
@@ -337,14 +338,14 @@ const UserMedicinesDashboard = () => {
                 if (!selectedVendor && !showAllProducts) {
                     return null; // Hide products section when nothing is selected
                 }
-                
+
                 const visibleMedicines = filteredAndSortedMedicines.filter(medicine => {
                     if (showAllProducts && !selectedVendor) return true; // Show all when "Browse All" is clicked
                     if (!selectedVendor) return false; // Hide if no vendor selected and not showing all
                     const productVendorId = (medicine.vendor && typeof medicine.vendor === 'object') ? medicine.vendor._id : medicine.vendor;
                     return productVendorId === selectedVendor._id;
                 });
-                
+
                 if (selectedVendor && visibleMedicines.length === 0) {
                     return (
                         <div className="alert alert-warning" role="alert">
@@ -355,128 +356,126 @@ const UserMedicinesDashboard = () => {
                 return (
                     <div className="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
                         {visibleMedicines.map((medicine) => (
-                    <div className="col" key={medicine._id}>
-                        <div className="card h-100 shadow-sm medicine-card">
-                            <div className="position-relative">
-                                <img
-                                    src={medicine.images?.[0] || medicine.imageUrl || PLACEHOLDER}
-                                    alt={medicine.name}
-                                    className="card-img-top"
-                                    style={{ height: '200px', objectFit: 'cover' }}
-                                />
-                                {calculateDiscountPercent(medicine.price, medicine.discountedPrice) > 0 && (
-                                    <span className="badge bg-success position-absolute top-0 end-0 m-2 fs-6">
-                                        {calculateDiscountPercent(medicine.price, medicine.discountedPrice)}% OFF
-                                    </span>
-                                )}
-                                <button
-                                    className="btn btn-sm btn-light position-absolute top-0 start-0 m-2"
-                                    onClick={() => toggleWishlist(medicine._id)}
-                                >
-                                    <Heart 
-                                        size={16} 
-                                        fill={wishlist.includes(medicine._id) ? '#dc3545' : 'none'}
-                                        color={wishlist.includes(medicine._id) ? '#dc3545' : '#6c757d'}
-                                    />
-                                </button>
-                            </div>
-                            <div className="card-body d-flex flex-column">
-                                <h5 className="card-title fw-bold mb-2">{medicine.name}</h5>
-                                
-                                {/* Vendor Information */}
-                                <div className="d-flex justify-content-between text-muted small mb-2">
-                                    <span className="d-flex align-items-center gap-1">
-                                        <Building size={14} /> 
-                                        { (medicine?.vendor && typeof medicine.vendor === 'object' && medicine.vendor?.name)
-                                            ? `Verified Vendor · ${medicine.vendor.name}`
-                                            : (medicine?.vendorName
-                                                ? `Verified Vendor · ${medicine.vendorName}`
-                                                : 'Verified Vendor') }
-                                    </span>
-                                    <div className="d-flex align-items-center">
-                                        {[...Array(5)].map((_, i) => (
-                                            <Star 
-                                                key={i} 
-                                                size={14} 
-                                                fill={i < (medicine.rating || 0) ? '#f59e0b' : '#d1d5db'} 
-                                                strokeWidth={0}
+                            <div className="col" key={medicine._id}>
+                                <div className="card h-100 shadow-sm medicine-card">
+                                    <div className="position-relative">
+                                        <img
+                                            src={medicine.images?.[0] || medicine.imageUrl || PLACEHOLDER}
+                                            alt={medicine.name}
+                                            className="card-img-top"
+                                            style={{ height: '200px', objectFit: 'cover' }}
+                                        />
+                                        {calculateDiscountPercent(medicine.price, medicine.discountedPrice) > 0 && (
+                                            <span className="badge bg-success position-absolute top-0 end-0 m-2 fs-6">
+                                                {calculateDiscountPercent(medicine.price, medicine.discountedPrice)}% OFF
+                                            </span>
+                                        )}
+                                        <button
+                                            className="btn btn-sm btn-light position-absolute top-0 start-0 m-2"
+                                            onClick={() => toggleWishlist(medicine._id)}
+                                        >
+                                            <Heart
+                                                size={16}
+                                                fill={wishlist.includes(medicine._id) ? '#dc3545' : 'none'}
+                                                color={wishlist.includes(medicine._id) ? '#dc3545' : '#6c757d'}
                                             />
-                                        ))}
-                                        <span className="ms-1">({medicine.reviews?.length || 0})</span>
-                                    </div>
-                                </div>
-                                
-                                {/* Location and Expiry */}
-                                <p className="text-muted small d-flex align-items-center gap-1 mb-2">
-                                    <MapPin size={14} /> {medicine.city || 'N/A'}
-                                </p>
-                                <p className={`fw-semibold d-flex align-items-center gap-1 mb-3 small ${
-                                    calculateDaysLeft(medicine.expiryDate) <= 7 ? 'text-danger' : 'text-success'
-                                }`}>
-                                    <CalendarCheck2 size={14} /> 
-                                    Expires in {calculateDaysLeft(medicine.expiryDate)} days
-                                </p>
-                                
-                                {/* Price */}
-                                <div className="mb-3">
-                                    <span className="fs-4 fw-bold text-success">
-                                        ₹{(medicine.discountedPrice || medicine.price).toFixed(2)}
-                                    </span>
-                                    {medicine.discountedPrice && (
-                                        <span className="ms-2 text-muted text-decoration-line-through">
-                                            ₹{medicine.price.toFixed(2)}
-                                        </span>
-                                    )}
-                                </div>
-
-                                <p className="card-text small flex-grow-1">{medicine.description}</p>
-                                
-                                {/* Quantity + Actions */}
-                                <div className="mt-auto d-grid gap-2">
-                                    <div className="d-flex justify-content-center align-items-center gap-2">
-                                        <button
-                                            className="btn btn-outline-secondary btn-sm"
-                                            onClick={() => handleQuantityChange(medicine._id, -1)}
-                                            style={{ width: '32px', height: '32px', padding: 0 }}
-                                        >
-                                            -
-                                        </button>
-                                        <span className="fw-bold" style={{ minWidth: '30px', textAlign: 'center' }}>
-                                            {getQuantity(medicine._id)}
-                                        </span>
-                                        <button
-                                            className="btn btn-outline-secondary btn-sm"
-                                            onClick={() => handleQuantityChange(medicine._id, 1)}
-                                            style={{ width: '32px', height: '32px', padding: 0 }}
-                                        >
-                                            +
                                         </button>
                                     </div>
+                                    <div className="card-body d-flex flex-column">
+                                        <h5 className="card-title fw-bold mb-2">{medicine.name}</h5>
 
-                                    <button
-                                        className={`btn ${
-                                            cartItems.some((item) => item.product && item.product._id === medicine._id) 
-                                                ? 'btn-secondary' 
-                                                : 'btn-success'
-                                        }`}
-                                        disabled={cartItems.some((item) => item.product && item.product._id === medicine._id)}
-                                        onClick={() => handleAddToCart(medicine._id, getQuantity(medicine._id))}
-                                    >
-                                        {cartItems.some((item) => item.product && item.product._id === medicine._id) 
-                                            ? 'In Cart' 
-                                            : `Add ${getQuantity(medicine._id)} to Cart`
-                                        }
-                                    </button>
-                                    <button
-                                        className="btn btn-outline-secondary"
-                                        onClick={() => openMedicineModal(medicine)}
-                                    >
-                                        View Details
-                                    </button>
+                                        {/* Vendor Information */}
+                                        <div className="d-flex justify-content-between text-muted small mb-2">
+                                            <span className="d-flex align-items-center gap-1">
+                                                <Building size={14} />
+                                                {(medicine?.vendor && typeof medicine.vendor === 'object' && medicine.vendor?.name)
+                                                    ? `Verified Vendor · ${medicine.vendor.name}`
+                                                    : (medicine?.vendorName
+                                                        ? `Verified Vendor · ${medicine.vendorName}`
+                                                        : 'Verified Vendor')}
+                                            </span>
+                                            <div className="d-flex align-items-center">
+                                                {[...Array(5)].map((_, i) => (
+                                                    <Star
+                                                        key={i}
+                                                        size={14}
+                                                        fill={i < (medicine.rating || 0) ? '#f59e0b' : '#d1d5db'}
+                                                        strokeWidth={0}
+                                                    />
+                                                ))}
+                                                <span className="ms-1">({medicine.reviews?.length || 0})</span>
+                                            </div>
+                                        </div>
+
+                                        {/* Location and Expiry */}
+                                        <p className="text-muted small d-flex align-items-center gap-1 mb-2">
+                                            <MapPin size={14} /> {medicine.city || 'N/A'}
+                                        </p>
+                                        <p className={`fw-semibold d-flex align-items-center gap-1 mb-3 small ${calculateDaysLeft(medicine.expiryDate) <= 7 ? 'text-danger' : 'text-success'
+                                            }`}>
+                                            <CalendarCheck2 size={14} />
+                                            Expires in {calculateDaysLeft(medicine.expiryDate)} days
+                                        </p>
+
+                                        {/* Price */}
+                                        <div className="mb-3">
+                                            <span className="fs-4 fw-bold text-success">
+                                                ₹{(medicine.discountedPrice || medicine.price).toFixed(2)}
+                                            </span>
+                                            {medicine.discountedPrice && (
+                                                <span className="ms-2 text-muted text-decoration-line-through">
+                                                    ₹{medicine.price.toFixed(2)}
+                                                </span>
+                                            )}
+                                        </div>
+
+                                        <p className="card-text small flex-grow-1">{medicine.description}</p>
+
+                                        {/* Quantity + Actions */}
+                                        <div className="mt-auto d-grid gap-2">
+                                            <div className="d-flex justify-content-center align-items-center gap-2">
+                                                <button
+                                                    className="btn btn-outline-secondary btn-sm"
+                                                    onClick={() => handleQuantityChange(medicine._id, -1)}
+                                                    style={{ width: '32px', height: '32px', padding: 0 }}
+                                                >
+                                                    -
+                                                </button>
+                                                <span className="fw-bold" style={{ minWidth: '30px', textAlign: 'center' }}>
+                                                    {getQuantity(medicine._id)}
+                                                </span>
+                                                <button
+                                                    className="btn btn-outline-secondary btn-sm"
+                                                    onClick={() => handleQuantityChange(medicine._id, 1)}
+                                                    style={{ width: '32px', height: '32px', padding: 0 }}
+                                                >
+                                                    +
+                                                </button>
+                                            </div>
+
+                                            <button
+                                                className={`btn ${cartItems.some((item) => item.product && item.product._id === medicine._id)
+                                                    ? 'btn-secondary'
+                                                    : 'btn-success'
+                                                    }`}
+                                                disabled={cartItems.some((item) => item.product && item.product._id === medicine._id)}
+                                                onClick={() => handleAddToCart(medicine._id, getQuantity(medicine._id))}
+                                            >
+                                                {cartItems.some((item) => item.product && item.product._id === medicine._id)
+                                                    ? 'In Cart'
+                                                    : `Add ${getQuantity(medicine._id)} to Cart`
+                                                }
+                                            </button>
+                                            <button
+                                                className="btn btn-outline-secondary"
+                                                onClick={() => openMedicineModal(medicine)}
+                                            >
+                                                View Details
+                                            </button>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
-                    </div>
                         ))}
                     </div>
                 );
@@ -526,16 +525,16 @@ const UserMedicinesDashboard = () => {
                                         />
                                     )}
                                 </div>
-                                
+
                                 {/* Medicine Details */}
                                 <div className="row">
                                     <div className="col-md-6">
                                         <div className="mb-2">
-                                            <span className="fw-semibold">Vendor:</span> { (selectedMedicine?.vendor && typeof selectedMedicine.vendor === 'object' && selectedMedicine.vendor?.name)
+                                            <span className="fw-semibold">Vendor:</span> {(selectedMedicine?.vendor && typeof selectedMedicine.vendor === 'object' && selectedMedicine.vendor?.name)
                                                 ? `${selectedMedicine.vendor.name} (Verified Vendor)`
                                                 : (selectedMedicine?.vendorName
                                                     ? `${selectedMedicine.vendorName} (Verified Vendor)`
-                                                    : 'Verified Vendor') }
+                                                    : 'Verified Vendor')}
                                         </div>
                                         <div className="mb-2">
                                             <span className="fw-semibold">Location:</span> {selectedMedicine.city}
@@ -573,29 +572,29 @@ const UserMedicinesDashboard = () => {
                                         </div>
                                     </div>
                                 </div>
-                                
+
                                 <div className="mb-3">
                                     <span className="fw-semibold">Description:</span> {selectedMedicine.description}
                                 </div>
-                                
+
                                 {/* Reviews Section */}
                                 <div className="mt-4 border-top pt-3">
                                     <h6 className="fw-bold mb-3">Customer Reviews</h6>
                                     <div className="list-group">
-                                        {selectedMedicine.reviews && selectedMedicine.reviews.length > 0 ? 
+                                        {selectedMedicine.reviews && selectedMedicine.reviews.length > 0 ?
                                             selectedMedicine.reviews.map((review) => (
                                                 <div key={review.id} className="list-group-item">
                                                     <div className="d-flex justify-content-between align-items-start">
                                                         <strong>{review.user?.name || 'Anonymous'}</strong>
                                                         <div className="d-flex">
-                                                            {[...Array(5)].map((_, i) => 
-                                                                <Star key={i} size={14} fill={i < review.rating ? '#f59e0b' : '#d1d5db'} strokeWidth={0}/>
+                                                            {[...Array(5)].map((_, i) =>
+                                                                <Star key={i} size={14} fill={i < review.rating ? '#f59e0b' : '#d1d5db'} strokeWidth={0} />
                                                             )}
                                                         </div>
                                                     </div>
                                                     <p className="mb-0 mt-1"><q>{review.comment}</q></p>
                                                 </div>
-                                            )) 
+                                            ))
                                             : <p className="text-muted">No reviews yet.</p>
                                         }
                                     </div>
@@ -603,16 +602,15 @@ const UserMedicinesDashboard = () => {
                             </div>
                             <div className="modal-footer">
                                 <button
-                                    className={`btn ${
-                                        cartItems.some((item) => item.product && item.product._id === selectedMedicine._id) 
-                                            ? 'btn-secondary' 
-                                            : 'btn-success'
-                                    }`}
+                                    className={`btn ${cartItems.some((item) => item.product && item.product._id === selectedMedicine._id)
+                                        ? 'btn-secondary'
+                                        : 'btn-success'
+                                        }`}
                                     disabled={cartItems.some((item) => item.product && item.product._id === selectedMedicine._id)}
                                     onClick={() => handleAddToCart(selectedMedicine._id)}
                                 >
-                                    {cartItems.some((item) => item.product && item.product._id === selectedMedicine._id) 
-                                        ? 'In Cart' 
+                                    {cartItems.some((item) => item.product && item.product._id === selectedMedicine._id)
+                                        ? 'In Cart'
                                         : 'Add to Cart'
                                     }
                                 </button>

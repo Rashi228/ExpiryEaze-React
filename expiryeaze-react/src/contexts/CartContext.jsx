@@ -69,12 +69,17 @@ export const CartProvider = ({ children }) => {
   };
 
   const removeFromCart = async (itemId) => {
-     if (!user) return;
+    if (!user) return;
     setLoading(true);
     try {
       await api.delete('/cart', { data: { itemId } });
       await fetchCart();
     } catch (err) {
+      // Handle "Cart not found" (404) by clearing local state
+      if (err.response && err.response.status === 404) {
+        setCartItems([]);
+        return;
+      }
       setError(err.response?.data?.error || 'Failed to remove item from cart.');
     } finally {
       setLoading(false);
@@ -86,7 +91,7 @@ export const CartProvider = ({ children }) => {
     setLoading(true);
     try {
       console.log('🛒 Updating quantity:', { itemId, newQuantity, userId: user.id });
-      
+
       if (newQuantity <= 0) {
         // If quantity is 0 or less, remove the item
         console.log('🗑️ Removing item from cart');
@@ -94,22 +99,34 @@ export const CartProvider = ({ children }) => {
       } else {
         // Update quantity
         console.log('📝 Updating quantity via API');
-        const response = await api.put('/cart', { 
-          itemId, 
-          quantity: newQuantity 
+        const response = await api.put('/cart', {
+          itemId,
+          quantity: newQuantity
         });
         console.log('✅ API Response:', response.data);
         await fetchCart();
       }
     } catch (err) {
       console.error('❌ Update quantity error:', err);
+
+      // Handle "Cart not found" (404) by clearing local state
+      if (err.response && err.response.status === 404) {
+        console.warn('⚠️ Cart not found on server. Clearing local cart to sync.');
+        setCartItems([]);
+        // Don't throw, just let the UI update to empty
+        return;
+      }
+
       console.error('❌ Error details:', err.response?.data);
-      setError(`Failed to update item quantity: ${err.response?.data?.error || err.message}`);
+      const msg = err.response?.data?.error || err.message;
+      setError(`Failed to update item quantity: ${msg}`);
+      // Throw for other errors so UI can react if needed
+      throw new Error(msg);
     } finally {
       setLoading(false);
     }
   };
-  
+
   const clearCart = async () => {
     // This would typically be another API endpoint, for now we clear locally and can add it later
     setCartItems([]);

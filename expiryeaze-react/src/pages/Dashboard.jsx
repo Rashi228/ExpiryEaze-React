@@ -12,7 +12,7 @@ const Dashboard = () => {
   const { user } = useAuth();
   const { cartItems, addToCart, updateQuantity } = useCart();
   const navigate = useNavigate();
-  
+
   const [allProducts, setAllProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [notification, setNotification] = useState('');
@@ -70,13 +70,13 @@ const Dashboard = () => {
       'Mumbai', 'Delhi', 'Bangalore', 'Hyderabad', 'Chennai', 'Kolkata',
       'Pune', 'Ahmedabad', 'Jaipur', 'Surat', 'Lucknow', 'Kanpur'
     ];
-    
+
     // Get cities from existing products
     const productCities = Array.from(new Set(allProducts.map(p => p.city).filter(city => city)));
-    
+
     // Combine predefined cities with product cities and remove duplicates
     const allCities = [...new Set([...predefinedCities, ...productCities])];
-    
+
     return ['all', ...allCities.sort()];
   };
 
@@ -94,7 +94,7 @@ const Dashboard = () => {
       }, 2000);
       return;
     }
-    
+
     // Check if user has joined waitlist as "user" role
     try {
       const checkResponse = await axios.get(`${config.API_URL}/auth/waitlist/check`, {
@@ -103,7 +103,7 @@ const Dashboard = () => {
           role: 'user'
         }
       });
-      
+
       if (!checkResponse.data.joined) {
         setNotification('Please join the waitlist as a user to add products to cart!');
         setTimeout(() => {
@@ -124,7 +124,7 @@ const Dashboard = () => {
         return;
       }
     }
-    
+
     // If user is signed in and has joined waitlist as user, add to cart
     handleAddToCart(productId, quantity);
   };
@@ -137,7 +137,7 @@ const Dashboard = () => {
       // Reset quantity after adding to cart
       setQuantities(prev => ({ ...prev, [productId]: 1 }));
     } catch (error) {
-      setNotification('Failed to add product to cart.');
+      setNotification(error.message || 'Failed to add product to cart.');
       setTimeout(() => setNotification(''), 3000);
     }
   };
@@ -145,7 +145,7 @@ const Dashboard = () => {
   const handleQuantityChange = (productId, change) => {
     // Check if item is in cart
     const cartItem = cartItems.find(item => item.product && item.product._id === productId);
-    
+
     if (cartItem) {
       // If item is in cart, update cart quantity
       const newQuantity = Math.max(0, cartItem.quantity + change);
@@ -177,7 +177,7 @@ const Dashboard = () => {
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
     return diffDays > 0 ? diffDays : 0;
   };
-  
+
   const calculateDiscountPercent = (price, discountedPrice) => {
     if (!discountedPrice || discountedPrice >= price) return 0;
     return Math.round(((price - discountedPrice) / price) * 100);
@@ -203,7 +203,7 @@ const Dashboard = () => {
           {notification}
         </div>
       )}
-      
+
       <div className="d-flex justify-content-between align-items-center mb-4">
         <div>
           <h1 className="fw-bold fs-2 mb-1">Dashboard</h1>
@@ -226,9 +226,9 @@ const Dashboard = () => {
                 <span className="input-group-text bg-white">
                   <Search size={18} />
                 </span>
-                <input 
-                  type="text" 
-                  className="form-control" 
+                <input
+                  type="text"
+                  className="form-control"
                   placeholder="Search products..."
                   value={searchTerm}
                   onChange={e => setSearchTerm(e.target.value)}
@@ -236,33 +236,33 @@ const Dashboard = () => {
               </div>
             </div>
             <div className="col-md-2">
-              <select 
-                className="form-select" 
-                value={selectedCategory} 
+              <select
+                className="form-select"
+                value={selectedCategory}
                 onChange={e => setSelectedCategory(e.target.value)}
               >
                 <option key="all-categories" value="all">All Categories</option>
-                {getCategories().map(category => 
+                {getCategories().map(category =>
                   <option key={category} value={category}>{category}</option>
                 )}
               </select>
             </div>
             <div className="col-md-2">
-              <select 
-                className="form-select" 
-                value={selectedCity} 
+              <select
+                className="form-select"
+                value={selectedCity}
                 onChange={e => setSelectedCity(e.target.value)}
               >
                 <option key="all-cities" value="all">All Cities</option>
-                {getCities().map(city => 
+                {getCities().map(city =>
                   <option key={city} value={city}>{city}</option>
                 )}
               </select>
             </div>
             <div className="col-md-2">
-              <select 
-                className="form-select" 
-                value={sortOrder} 
+              <select
+                className="form-select"
+                value={sortOrder}
                 onChange={e => setSortOrder(e.target.value)}
               >
                 <option key="sort-name" value="name">Sort by Name</option>
@@ -284,7 +284,7 @@ const Dashboard = () => {
       <div className="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
         {filteredAndSortedProducts.length === 0 ? (
           <div className="col-12 text-center py-5">
-            <div className="bg-light rounded-circle d-flex align-items-center justify-content-center mx-auto mb-3" style={{width: '80px', height: '80px'}}>
+            <div className="bg-light rounded-circle d-flex align-items-center justify-content-center mx-auto mb-3" style={{ width: '80px', height: '80px' }}>
               <span className="display-6">🔍</span>
             </div>
             <h6 className="text-muted">No Products Found</h6>
@@ -306,45 +306,43 @@ const Dashboard = () => {
                       {calculateDiscountPercent(product.price, product.discountedPrice)}% OFF
                     </span>
                   )}
-                  <span className={`badge position-absolute top-0 start-0 m-2 fs-6 ${
-                    product.category === 'medicines' ? 'bg-primary' : 'bg-success'
-                  }`}>
+                  <span className={`badge position-absolute top-0 start-0 m-2 fs-6 ${product.category === 'medicines' ? 'bg-primary' : 'bg-success'
+                    }`}>
                     {product.category}
                   </span>
                 </div>
                 <div className="card-body d-flex flex-column">
                   <h5 className="card-title fw-bold mb-2">{product.name}</h5>
-                  
+
                   {/* Vendor Information */}
                   <div className="d-flex justify-content-between text-muted small mb-2">
                     <span className="d-flex align-items-center gap-1">
-                      <Building size={14} /> 
+                      <Building size={14} />
                       {product.vendor?.name || 'Verified Vendor'}
                     </span>
                     <div className="d-flex align-items-center">
                       {[...Array(5)].map((_, i) => (
-                        <Star 
-                          key={i} 
-                          size={14} 
-                          fill={i < (product.rating || 0) ? '#f59e0b' : '#d1d5db'} 
+                        <Star
+                          key={i}
+                          size={14}
+                          fill={i < (product.rating || 0) ? '#f59e0b' : '#d1d5db'}
                           strokeWidth={0}
                         />
                       ))}
                       <span className="ms-1">({product.reviews?.length || 0})</span>
                     </div>
                   </div>
-                  
+
                   {/* Location and Expiry */}
                   <p className="text-muted small d-flex align-items-center gap-1 mb-2">
                     <MapPin size={14} /> {product.city || 'N/A'}
                   </p>
-                  <p className={`fw-semibold d-flex align-items-center gap-1 mb-3 small ${
-                    calculateDaysLeft(product.expiryDate) <= 7 ? 'text-danger' : 'text-success'
-                  }`}>
-                    <CalendarCheck2 size={14} /> 
+                  <p className={`fw-semibold d-flex align-items-center gap-1 mb-3 small ${calculateDaysLeft(product.expiryDate) <= 7 ? 'text-danger' : 'text-success'
+                    }`}>
+                    <CalendarCheck2 size={14} />
                     Expires in {calculateDaysLeft(product.expiryDate)} days
                   </p>
-                  
+
                   {/* Price */}
                   <div className="mb-3">
                     <div className="d-flex align-items-center gap-2">
@@ -360,7 +358,7 @@ const Dashboard = () => {
                     {getQuantity(product._id) > 1 && (
                       <div className="mt-1">
                         <small className="text-muted">
-                          Total for {getQuantity(product._id)}: 
+                          Total for {getQuantity(product._id)}:
                           <span className="fw-bold text-success ms-1">
                             ₹{((product.discountedPrice || product.price) * getQuantity(product._id)).toFixed(2)}
                           </span>
@@ -370,7 +368,7 @@ const Dashboard = () => {
                   </div>
 
                   <p className="card-text small flex-grow-1">{product.description}</p>
-                  
+
                   {/* Action Buttons */}
                   <div className="mt-auto d-grid gap-2">
                     {/* Quantity Selector */}
@@ -395,16 +393,15 @@ const Dashboard = () => {
                     </div>
 
                     <button
-                      className={`btn ${
-                        cartItems.some((item) => item.product && item.product._id === product._id) 
-                          ? 'btn-secondary' 
+                      className={`btn ${cartItems.some((item) => item.product && item.product._id === product._id)
+                          ? 'btn-secondary'
                           : 'btn-success'
-                      }`}
+                        }`}
                       disabled={cartItems.some((item) => item.product && item.product._id === product._id)}
                       onClick={() => handleBuyClick(product._id, getQuantity(product._id))}
                     >
-                      {cartItems.some((item) => item.product && item.product._id === product._id) 
-                        ? 'In Cart' 
+                      {cartItems.some((item) => item.product && item.product._id === product._id)
+                        ? 'In Cart'
                         : `Add ${getQuantity(product._id)} to Cart`
                       }
                     </button>
@@ -446,7 +443,7 @@ const Dashboard = () => {
                         <>
                           <button
                             className="btn btn-light position-absolute top-50 start-0 translate-middle-y"
-                            onClick={() => setCarouselIndex((prev) => 
+                            onClick={() => setCarouselIndex((prev) =>
                               prev === 0 ? selectedProduct.images.length - 1 : prev - 1
                             )}
                           >
@@ -454,7 +451,7 @@ const Dashboard = () => {
                           </button>
                           <button
                             className="btn btn-light position-absolute top-50 end-0 translate-middle-y"
-                            onClick={() => setCarouselIndex((prev) => 
+                            onClick={() => setCarouselIndex((prev) =>
                               prev === selectedProduct.images.length - 1 ? 0 : prev + 1
                             )}
                           >
@@ -472,7 +469,7 @@ const Dashboard = () => {
                     />
                   )}
                 </div>
-                
+
                 {/* Product Details */}
                 <div className="row">
                   <div className="col-md-6">
@@ -500,7 +497,7 @@ const Dashboard = () => {
                     )}
                     {getQuantity(selectedProduct._id) > 1 && (
                       <div className="mb-2">
-                        <span className="fw-semibold">Total for {getQuantity(selectedProduct._id)}:</span> 
+                        <span className="fw-semibold">Total for {getQuantity(selectedProduct._id)}:</span>
                         <span className="fw-bold text-success ms-1">
                           ₹{((selectedProduct.discountedPrice || selectedProduct.price) * getQuantity(selectedProduct._id)).toFixed(2)}
                         </span>
@@ -523,29 +520,29 @@ const Dashboard = () => {
                     </div>
                   </div>
                 </div>
-                
+
                 <div className="mb-3">
                   <span className="fw-semibold">Description:</span> {selectedProduct.description}
                 </div>
-                
+
                 {/* Reviews Section */}
                 <div className="mt-4 border-top pt-3">
                   <h6 className="fw-bold mb-3">Customer Reviews</h6>
                   <div className="list-group">
-                    {selectedProduct.reviews && selectedProduct.reviews.length > 0 ? 
+                    {selectedProduct.reviews && selectedProduct.reviews.length > 0 ?
                       selectedProduct.reviews.map((review) => (
                         <div key={review.id} className="list-group-item">
                           <div className="d-flex justify-content-between align-items-start">
                             <strong>{review.user?.name || 'Anonymous'}</strong>
                             <div className="d-flex">
-                              {[...Array(5)].map((_, i) => 
-                                <Star key={i} size={14} fill={i < review.rating ? '#f59e0b' : '#d1d5db'} strokeWidth={0}/>
+                              {[...Array(5)].map((_, i) =>
+                                <Star key={i} size={14} fill={i < review.rating ? '#f59e0b' : '#d1d5db'} strokeWidth={0} />
                               )}
                             </div>
                           </div>
                           <p className="mb-0 mt-1"><q>{review.comment}</q></p>
                         </div>
-                      )) 
+                      ))
                       : <p className="text-muted">No reviews yet.</p>
                     }
                   </div>
@@ -576,16 +573,15 @@ const Dashboard = () => {
                   </div>
 
                   <button
-                    className={`btn ${
-                      cartItems.some((item) => item.product && item.product._id === selectedProduct._id) 
-                        ? 'btn-secondary' 
+                    className={`btn ${cartItems.some((item) => item.product && item.product._id === selectedProduct._id)
+                        ? 'btn-secondary'
                         : 'btn-success'
-                    }`}
+                      }`}
                     disabled={cartItems.some((item) => item.product && item.product._id === selectedProduct._id)}
                     onClick={() => handleBuyClick(selectedProduct._id, getQuantity(selectedProduct._id))}
                   >
-                    {cartItems.some((item) => item.product && item.product._id === selectedProduct._id) 
-                      ? 'In Cart' 
+                    {cartItems.some((item) => item.product && item.product._id === selectedProduct._id)
+                      ? 'In Cart'
                       : `Add ${getQuantity(selectedProduct._id)} to Cart`
                     }
                   </button>
