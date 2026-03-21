@@ -11,6 +11,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@google/genai": "^1.46.0",
     "bcryptjs": "^2.4.3",
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",
@@ -19,7 +20,8 @@
     "mongoose": "^8.4.1",
     "multer": "^1.4.5-lts.1",
     "nodemailer": "^8.0.1",
-    "razorpay": "^2.9.6"
+    "razorpay": "^2.9.6",
+    "yt-search": "^2.13.1"
   },
   "devDependencies": {
     "nodemon": "^3.1.2"

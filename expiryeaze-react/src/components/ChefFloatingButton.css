@@ -1,0 +1,71 @@
+.chef-floating-container {
+  position: fixed;
+  bottom: 25px;
+  right: 25px;
+  z-index: 1050; /* Above bootstrap modals/toasters usually, or just below */
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+}
+
+.chef-icon-wrapper {
+  background: white;
+  border: 4px solid #198754; /* Success color */
+  border-radius: 50%;
+  width: 65px;
+  height: 65px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 35px;
+  margin-left: 15px;
+  /* Playful bounce animation */
+  animation: chef-bounce 3s infinite ease-in-out;
+  transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.chef-floating-container:hover .chef-icon-wrapper {
+  transform: scale(1.1) rotate(10deg);
+  animation: none; /* stop bouncing on hover */
+}
+
+.chef-tooltip {
+  background-color: #198754;
+  color: white;
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-weight: 600;
+  font-size: 14px;
+  opacity: 0;
+  transform: translateX(10px);
+  transition: all 0.3s ease;
+  white-space: nowrap;
+  position: relative;
+}
+
+/* Triangle for the tooltip */
+.chef-tooltip::after {
+  content: '';
+  position: absolute;
+  right: -6px;
+  top: 50%;
+  transform: translateY(-50%);
+  border-width: 6px 0 6px 6px;
+  border-style: solid;
+  border-color: transparent transparent transparent #198754;
+}
+
+.chef-floating-container:hover .chef-tooltip {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+/* Keyframes: peeks up and drops down */
+@keyframes chef-bounce {
+  0%, 100% {
+    transform: translateY(0) rotate(0);
+  }
+  50% {
+    transform: translateY(-12px) rotate(-5deg);
+  }
+}

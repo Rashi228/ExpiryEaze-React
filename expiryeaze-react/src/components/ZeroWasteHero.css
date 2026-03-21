@@ -1,0 +1,32 @@
+.zero-waste-hero {
+    position: relative;
+    overflow: hidden;
+}
+
+.marquee-container {
+    height: 100%;
+    width: 100%;
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: 1;
+}
+
+.marquee {
+    display: flex;
+    animation: marquee 30s linear infinite;
+    gap: 10px;
+}
+
+.marquee-img {
+    height: 250px;
+    width: 300px;
+    object-fit: cover;
+    opacity: 0.6;
+    border-radius: 8px;
+}
+
+@keyframes marquee {
+    0% { transform: translateX(0); }
+    100% { transform: translateX(-50%); } 
+}

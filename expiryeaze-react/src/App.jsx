@@ -6,6 +6,7 @@ import { CartProvider } from './contexts/CartContext';
 import { OrderProvider } from './contexts/OrderContext';
 import Header from './components/Header';
 import Footer from './components/Footer';
+import ChefFloatingButton from './components/ChefFloatingButton';
 import { Toaster } from './components/ui/toaster';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import './App.css';
@@ -31,6 +32,7 @@ import UserMedicinesDashboard from './pages/UserMedicinesDashboard';
 import Dashboard from './pages/Dashboard';
 import TestPage from './pages/TestPage';
 import AddProduct from './pages/AddProduct';
+import MyItemsPage from './pages/MyItemsPage';
 
 function App() {
   return (
@@ -65,9 +67,11 @@ function App() {
                     <Route path="/test" element={<TestPage />} />
                     <Route path="/add-product" element={<AddProduct />} />
                     <Route path="/edit-product/:id" element={<AddProduct />} />
+                    <Route path="/my-items" element={<MyItemsPage />} />
                   </Routes>
                 </main>
                 <Footer />
+                <ChefFloatingButton />
                 <Toaster />
               </div>
             </OrderProvider>
