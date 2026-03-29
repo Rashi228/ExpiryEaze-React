@@ -3,6 +3,8 @@
 export const config = {
   // API Configuration
   API_URL: process.env.REACT_APP_API_URL || 'https://expiryeaze-backend.onrender.com/api/v1',
+  // API_URL: 'http://localhost:5001/api/v1',
+
 
   // Environment
   ENV: process.env.REACT_APP_ENV || 'development',

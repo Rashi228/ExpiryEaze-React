@@ -1,8 +1,14 @@
 const Product = require('../models/Product');
 
-// @desc      Get all products
-// @route     GET /api/v1/products
-// @access    Public
+
+// @desc     Get FatSecret Data for missing ingredients
+// @route    GET /api/v1/products/fatsecret/:barcode
+// @access   Public/Private
+  
+
+// @desc     Get all products
+// @route    GET /api/v1/products
+// @access   Public
 exports.getProducts = async (req, res, next) => {
   try {
     const products = await Product.find().populate('vendor', 'name');
@@ -12,9 +18,9 @@ exports.getProducts = async (req, res, next) => {
   }
 };
 
-// @desc      Get single product
-// @route     GET /api/v1/products/:id
-// @access    Public
+// @desc     Get single product by ID
+// @route    GET /api/v1/products/:id
+// @access   Public
 exports.getProductById = async (req, res, next) => {
   try {
     const product = await Product.findById(req.params.id).populate('vendor', 'name');
@@ -27,9 +33,9 @@ exports.getProductById = async (req, res, next) => {
   }
 };
 
-// @desc      Create new product
-// @route     POST /api/v1/products
-// @access    Private (for vendors)
+// @desc     Create new product
+// @route    POST /api/v1/products
+// @access   Private (for vendors)
 exports.createProduct = async (req, res, next) => {
   try {
     if (!req.user || !req.user.id) {
@@ -67,11 +73,6 @@ exports.createProduct = async (req, res, next) => {
     const product = await Product.create(req.body);
     
     // TODO: Add audit log entry here when audit system is implemented
-    // await AuditLog.create({
-    //   action: 'CREATE_PRODUCT',
-    //   productId: product._id,
-    //   vendorId: req.user.id
-    // });
 
     res.status(201).json({
       success: true,
@@ -82,9 +83,9 @@ exports.createProduct = async (req, res, next) => {
   }
 };
 
-// @desc      Update a product
-// @route     PUT /api/v1/products/:id
-// @access    Private (for vendors)
+// @desc     Update a product
+// @route    PUT /api/v1/products/:id
+// @access   Private (for vendors)
 exports.updateProduct = async (req, res, next) => {
   try {
     let product = await Product.findById(req.params.id);
@@ -111,7 +112,6 @@ exports.updateProduct = async (req, res, next) => {
       const today = new Date();
       today.setHours(0, 0, 0, 0); // Reset time to start of day
       
-      // Prevent setting expiry date in the past
       if (newExpiryDate < today) {
         return res.status(400).json({ 
           success: false, 
@@ -119,8 +119,6 @@ exports.updateProduct = async (req, res, next) => {
         });
       }
       
-      // Prevent extending expiry date backwards (fraud prevention)
-      // Only allow expiry date to be moved forward (closer to today) or kept same
       if (newExpiryDate > oldExpiryDate) {
         return res.status(400).json({ 
           success: false, 
@@ -137,11 +135,6 @@ exports.updateProduct = async (req, res, next) => {
       });
     }
 
-    // Store old values for audit trail (if audit system is implemented)
-    const oldExpiryDate = product.expiryDate;
-    const oldStock = product.stock;
-    const oldPrice = product.price;
-
     // Manually update fields
     product.name = req.body.name || product.name;
     product.description = req.body.description || product.description;
@@ -149,36 +142,35 @@ exports.updateProduct = async (req, res, next) => {
     product.category = req.body.category || product.category;
     product.stock = req.body.stock || product.stock;
     
-    // Only update expiry date if provided and validated
     if (req.body.expiryDate) {
       product.expiryDate = req.body.expiryDate;
     }
     
     product.images = req.body.images || product.images;
     
-    // Only set expiry photo if it doesn't exist yet
     if (req.body.expiryPhoto && !product.expiryPhoto) {
       product.expiryPhoto = req.body.expiryPhoto;
     }
     
-    // Explicitly handle discountedPrice to allow setting it to null/undefined
     if ('discountedPrice' in req.body) {
        product.discountedPrice = req.body.discountedPrice;
+    }
+
+    // If a barcode was provided during update, save it
+    if (req.body.barcode) {
+      product.barcode = req.body.barcode;
+    }
+    // Same for ingredients and netWeight
+    if (req.body.ingredients) {
+      product.ingredients = req.body.ingredients;
+    }
+    if (req.body.netWeight) {
+      product.netWeight = req.body.netWeight;
     }
 
     const updatedProduct = await product.save();
 
     // TODO: Add audit log entry here when audit system is implemented
-    // await AuditLog.create({
-    //   action: 'UPDATE_PRODUCT',
-    //   productId: product._id,
-    //   vendorId: req.user.id,
-    //   changes: {
-    //     expiryDate: { old: oldExpiryDate, new: product.expiryDate },
-    //     stock: { old: oldStock, new: product.stock },
-    //     price: { old: oldPrice, new: product.price }
-    //   }
-    // });
 
     res.status(200).json({ success: true, data: updatedProduct });
   } catch (err) {
@@ -186,9 +178,9 @@ exports.updateProduct = async (req, res, next) => {
   }
 };
 
-// @desc      Get vendor's own products
-// @route     GET /api/v1/products/vendor
-// @access    Private (for vendors)
+// @desc     Get vendor's own products
+// @route    GET /api/v1/products/vendor
+// @access   Private (for vendors)
 exports.getVendorProducts = async (req, res, next) => {
   try {
     const products = await Product.find({ vendor: req.user.id }).populate('vendor', 'name');
@@ -198,9 +190,9 @@ exports.getVendorProducts = async (req, res, next) => {
   }
 };
 
-// @desc      Delete a product
-// @route     DELETE /api/v1/products/:id
-// @access    Private (for vendors)
+// @desc     Delete a product
+// @route    DELETE /api/v1/products/:id
+// @access   Private (for vendors)
 exports.deleteProduct = async (req, res, next) => {
   try {
     const product = await Product.findById(req.params.id);
@@ -223,14 +215,31 @@ exports.deleteProduct = async (req, res, next) => {
     await Product.findByIdAndDelete(req.params.id);
     
     // TODO: Add audit log entry here when audit system is implemented
-    // await AuditLog.create({
-    //   action: 'DELETE_PRODUCT',
-    //   productId: product._id,
-    //   vendorId: req.user.id
-    // });
 
     res.status(200).json({ success: true, data: {}});
   } catch (err) {
     res.status(400).json({ success: false, error: err.message });
   }
 }; 
+
+// =========================================================================
+// NEW: THE "MONGODB MEMORY" SCANNER FUNCTION
+// =========================================================================
+
+// @desc      Get single product by barcode (For Scanner Autofill)
+// @route     GET /api/v1/products/barcode/:barcode
+// @access    Public or Private (Vendor)
+exports.getProductByBarcode = async (req, res, next) => {
+  try {
+    // Search our MongoDB to see if ANY vendor has ever scanned this barcode before
+    const product = await Product.findOne({ barcode: req.params.barcode });
+    
+    if (!product) {
+      return res.status(404).json({ success: false, error: 'Product not found in local database' });
+    }
+    
+    res.status(200).json({ success: true, data: product });
+  } catch (err) {
+    res.status(400).json({ success: false, error: err.message });
+  }
+};

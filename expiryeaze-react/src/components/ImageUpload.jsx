@@ -16,6 +16,7 @@ const ImageUpload = ({
     Array.from(files).forEach((file) => {
       if (file.type.startsWith('image/')) {
         const reader = new FileReader();
+        
         reader.onload = (e) => {
           const imageUrl = e.target?.result;
           
@@ -29,7 +30,8 @@ const ImageUpload = ({
             const updatedImages = [...productImages, newImage];
             setProductImages(updatedImages);
             onImagesChange(updatedImages);
-          } else {
+          } else if (type === 'expiry') {
+            // Standard Expiry Photo Upload (No AI Scanning!)
             setExpiryPhoto(imageUrl);
             onExpiryPhotoChange?.(imageUrl);
           }
@@ -135,27 +137,27 @@ const ImageUpload = ({
         </div>
       )}
 
-      {/* Expiry Date Photo Upload */}
+      {/* Standard Expiry Date Photo Upload */}
       <div className="col-12">
         <label className="form-label fw-semibold">Expiry Date Photo *</label>
         <div
           className={`border-2 border-dashed rounded p-4 text-center ${
-            dragActive ? 'border-success bg-success-light' : 'border-muted'
+            dragActive ? 'border-warning bg-warning-light' : 'border-muted'
           }`}
           onDragEnter={handleDrag}
           onDragLeave={handleDrag}
           onDragOver={handleDrag}
           onDrop={(e) => handleDrop(e, 'expiry')}
         >
-          <i className="fas fa-calendar-alt fs-1 text-muted mb-3"></i>
-          <p className="mb-2">Drag and drop expiry date photo here, or</p>
+          <i className="fas fa-calendar-check fs-1 text-muted mb-3"></i>
+          <p className="mb-2">Upload a clear photo showing the Expiry Date (For verification)</p>
           <button
             type="button"
-            className="btn btn-outline-success"
+            className="btn btn-outline-warning text-dark"
             onClick={() => expiryFileInputRef.current?.click()}
           >
-            <i className="fas fa-upload me-2"></i>
-            Choose File
+            <i className="fas fa-camera me-2"></i>
+            Upload Expiry Photo
           </button>
           <input
             ref={expiryFileInputRef}
@@ -164,7 +166,6 @@ const ImageUpload = ({
             className="d-none"
             onChange={(e) => e.target.files && handleFileUpload(e.target.files, 'expiry')}
           />
-          <p className="text-muted small mt-2">Upload a clear photo of the expiry date</p>
         </div>
       </div>
 

@@ -6,10 +6,8 @@ const ProductSchema = new mongoose.Schema({
     required: [true, 'Please add a product name'],
     trim: true,
   },
-  description: {
-    type: String,
-    required: [true, 'Please add a description'],
-  },
+  ingredients: { type: String, required: true }, // Nayi field
+  netWeight: { type: String, required: true },
   price: {
     type: Number,
     required: [true, 'Please add a price'],

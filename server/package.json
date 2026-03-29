@@ -12,6 +12,7 @@
   "license": "ISC",
   "dependencies": {
     "@google/genai": "^1.46.0",
+    "axios": "^1.14.0",
     "bcryptjs": "^2.4.3",
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",

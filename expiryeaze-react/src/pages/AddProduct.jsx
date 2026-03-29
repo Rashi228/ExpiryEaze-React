@@ -5,8 +5,7 @@ import { config } from '../lib/config';
 import { useAuth } from '../contexts/AuthContext';
 import ImageUpload from '../components/ImageUpload';
 import { GROCERY_OPTIONS, MEDICINE_OPTIONS } from '../lib/constants';
-
-// NOTE: Make sure to add a route for this page in your router (e.g., <Route path="/add-product" element={<AddProduct />} />)
+import { Html5QrcodeScanner } from 'html5-qrcode';
 
 const AddProduct = () => {
   const { id } = useParams();
@@ -16,7 +15,9 @@ const AddProduct = () => {
 
   const [product, setProduct] = useState({
     name: '',
-    description: '',
+    barcode: '',
+    ingredients: '',
+    netWeight: '',
     price: '',
     discountedPrice: '',
     stock: '',
@@ -31,8 +32,9 @@ const AddProduct = () => {
   const [error, setError] = useState(null);
   const [vendorSection, setVendorSection] = useState(null);
   const [availableCategories, setAvailableCategories] = useState([]);
+  const [showScanner, setShowScanner] = useState(false);
+  const [isScanning, setIsScanning] = useState(false);
 
-  // Determine vendor section and available categories
   useEffect(() => {
     const storedVendorCategory = localStorage.getItem('vendorCategory');
     setVendorSection(storedVendorCategory);
@@ -44,8 +46,6 @@ const AddProduct = () => {
       setAvailableCategories(MEDICINE_OPTIONS);
       setProduct(prev => ({ ...prev, category: 'medicines' }));
     } else {
-      // Fallback: if no vendor category is stored, redirect to category selection
-      console.warn('No vendor category found in localStorage. Redirecting to category selection.');
       navigate('/vendor-category-selection');
     }
   }, [navigate]);
@@ -60,11 +60,13 @@ const AddProduct = () => {
           if (existingProduct) {
             setProduct({
               name: existingProduct.name,
-              description: existingProduct.description,
+              barcode: existingProduct.barcode || '', 
+              ingredients: existingProduct.ingredients || '',
+              netWeight: existingProduct.netWeight || '',
               price: existingProduct.price.toString(),
               discountedPrice: existingProduct.discountedPrice?.toString() || '',
               stock: existingProduct.stock.toString(),
-              expiryDate: new Date(existingProduct.expiryDate).toISOString().split('T')[0],
+              expiryDate: existingProduct.expiryDate ? new Date(existingProduct.expiryDate).toISOString().split('T')[0] : '',
               category: existingProduct.category || 'groceries',
               requiresPrescription: existingProduct.requiresPrescription || false,
             });
@@ -85,6 +87,97 @@ const AddProduct = () => {
     }
   }, [id, isEditMode]);
 
+  useEffect(() => {
+    if (showScanner) {
+      const scanner = new Html5QrcodeScanner(
+        "reader", 
+        { fps: 10, qrbox: { width: 250, height: 150 } }, 
+        false
+      );
+
+      const onScanSuccess = async (decodedText) => {
+        scanner.clear(); // Turn off webcam
+        setShowScanner(false);
+        setIsScanning(true);
+
+        // Instantly save the barcode to the form
+        setProduct(prev => ({ ...prev, barcode: decodedText }));
+
+        try {
+          // 1. FAST CHECK: Local MongoDB
+          console.log("1. Checking local Database...");
+          try {
+            const localRes = await axios.get(`${config.API_URL}/products/barcode/${decodedText}`);
+            if (localRes.data.success && localRes.data.data) {
+              const item = localRes.data.data;
+              setProduct(prev => ({
+                ...prev,
+                name: item.name || prev.name,
+                ingredients: item.ingredients || prev.ingredients,
+                netWeight: item.netWeight || prev.netWeight,
+                price: item.price ? item.price.toString() : prev.price,
+                category: item.category || prev.category
+              }));
+              alert("Product found in your database! Fully autofilled.");
+              setIsScanning(false);
+              return; // STOP HERE!
+            }
+          } catch (localErr) {
+            console.log("Not found locally. Checking global database...");
+          }
+
+          // 2. FAST CHECK: Open Food Facts
+          console.log("2. Checking Open Food Facts...");
+          const offRes = await axios.get(`https://world.openfoodfacts.org/api/v0/product/${decodedText}.json`);
+          
+          let foundName = '';
+          let foundIngredients = '';
+          let foundWeight = '';
+          let foundImage = '';
+
+          if (offRes.data.status === 1) {
+            const item = offRes.data.product;
+            foundName = item.product_name || '';
+            foundIngredients = item.ingredients_text || '';
+            foundWeight = item.quantity || '';
+            foundImage = item.image_url || '';
+          }
+
+          // Update the React Form
+          setProduct(prev => ({
+            ...prev,
+            name: foundName || prev.name,
+            ingredients: foundIngredients || prev.ingredients,
+            netWeight: foundWeight || prev.netWeight,
+          }));
+
+          if (foundImage) {
+            setImages([{ id: 'scanned-img', url: foundImage, type: 'product', alt: 'product' }]);
+          }
+
+          // Simplified Alerts
+          if (!foundName) {
+             alert("Barcode captured! New product. Please enter details manually.");
+          } else {
+             alert(`${foundName} found! Please fill in any missing details like Price and Expiry.`);
+          }
+
+        } catch (error) {
+          console.error("Scanner Error:", error);
+          alert("Failed to connect to databases. Barcode saved.");
+        } finally {
+          setIsScanning(false);
+        }
+      };
+
+      scanner.render(onScanSuccess, (err) => { });
+
+      return () => {
+        scanner.clear().catch(e => console.error("Failed to clear scanner", e));
+      };
+    }
+  }, [showScanner]);
+
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
     setProduct(prev => ({
@@ -104,22 +197,22 @@ const AddProduct = () => {
       return;
     }
 
-    // Basic client-side validation to avoid NaN/empty submits
     const priceNum = parseFloat(product.price);
     const stockNum = parseInt(product.stock, 10);
     if (Number.isNaN(priceNum) || priceNum <= 0) {
       setError('Please enter a valid price.');
-      setLoading(false);
+      setLoading(false); 
       return;
     }
     if (Number.isNaN(stockNum) || stockNum < 0) {
       setError('Please enter a valid stock quantity.');
-      setLoading(false);
+      setLoading(false); 
       return;
     }
 
     const productData = {
       ...product,
+      barcode: product.barcode, 
       vendor: user.id,
       vendorName: user.name,
       price: priceNum,
@@ -140,17 +233,9 @@ const AddProduct = () => {
         await axios.post(`${config.API_URL}/products`, productData, { headers: authHeaders });
       }
 
-      // Navigate to correct dashboard based on vendor section
-      const vendorSection = localStorage.getItem('vendorCategory');
-      if (vendorSection === 'medicines') {
-        navigate('/medicines-dashboard');
-      } else {
-        navigate('/vendor-dashboard');
-      }
+      navigate(vendorSection === 'medicines' ? '/medicines-dashboard' : '/vendor-dashboard');
     } catch (err) {
-      const serverMsg = err?.response?.data?.error;
-      setError(serverMsg || 'Failed to save product. Please check your inputs.');
-      console.error('Save product error:', err?.response?.data || err);
+      setError(err?.response?.data?.error || 'Failed to save product.');
     } finally {
       setLoading(false);
     }
@@ -164,41 +249,79 @@ const AddProduct = () => {
             <div className="card-body p-4">
               <h1 className="text-center fw-bold mb-4">{isEditMode ? 'Edit Product' : 'Add a New Product'}</h1>
               {error && <div className="alert alert-danger">{error}</div>}
+
+              {/* BARCODE SCANNER UI */}
+              <div className="mb-4 p-3 bg-light rounded border border-primary border-opacity-25 text-center">
+                <label className="form-label fw-bold text-primary d-block mb-3">
+                  <i className="fas fa-barcode me-2"></i> Scan Product Barcode
+                </label>
+                
+                {!showScanner ? (
+                  <button 
+                    type="button" 
+                    className="btn btn-outline-primary" 
+                    onClick={() => setShowScanner(true)}
+                    disabled={isScanning}
+                  >
+                    {isScanning ? 'Fetching Product Data...' : 'Open Webcam to Scan Barcode'}
+                  </button>
+                ) : (
+                  <button 
+                    type="button" 
+                    className="btn btn-danger mb-3" 
+                    onClick={() => setShowScanner(false)}
+                  >
+                    Cancel Scan
+                  </button>
+                )}
+
+                {showScanner && <div id="reader" className="mx-auto" style={{ maxWidth: '400px' }}></div>}
+              </div>
+              
               <form onSubmit={handleSubmit}>
-                <div className="mb-3">
+                
+                {/* Captured Barcode Display */}
+                {product.barcode && (
+                  <div className="mb-3">
+                    <label className="form-label text-success fw-bold">
+                      <i className="fas fa-check-circle me-1"></i> Captured Barcode
+                    </label>
+                    <input type="text" className="form-control border-success bg-light" value={product.barcode} readOnly disabled />
+                  </div>
+                )}
+
+                <ImageUpload
+                  onImagesChange={setImages}
+                  onExpiryPhotoChange={setExpiryPhoto}
+                  existingImages={images}
+                  existingExpiryPhoto={expiryPhoto}
+                />
+
+                <div className="mb-3 mt-4">
                   <label htmlFor="name" className="form-label">Product Name</label>
                   <input type="text" className="form-control" id="name" name="name" value={product.name} onChange={handleChange} required />
                 </div>
-                <div className="mb-3">
-                  <label htmlFor="description" className="form-label">Description</label>
-                  <textarea className="form-control" id="description" name="description" rows={3} value={product.description} onChange={handleChange} required />
+                
+                <div className="row">
+                  <div className="col-md-8 mb-3">
+                    <label htmlFor="ingredients" className="form-label">Ingredients</label>
+                    <textarea className="form-control" id="ingredients" name="ingredients" rows={3} value={product.ingredients} onChange={handleChange} required placeholder="e.g. Rolled Oats, Honey, Almonds..." />
+                  </div>
+                  <div className="col-md-4 mb-3">
+                    <label htmlFor="netWeight" className="form-label">Net Weight / Content</label>
+                    <input type="text" className="form-control" id="netWeight" name="netWeight" value={product.netWeight} onChange={handleChange} required placeholder="e.g. 100g or 1 L" />
+                  </div>
                 </div>
 
                 <div className="mb-3">
-                  <label htmlFor="category" className="form-label">
-                    Category {vendorSection && (
-                      <span className="text-muted small">
-                        ({vendorSection === 'groceries' ? 'Groceries Section' : 'Medicines Section'})
-                      </span>
-                    )}
-                  </label>
-                  <select
-                    className="form-select"
-                    id="category"
-                    name="category"
-                    value={product.category}
-                    onChange={handleChange}
-                    required
-                  >
-                    {availableCategories.map(category => (
-                      <option key={category.value} value={category.value}>
-                        {category.label}
-                      </option>
+                  <label htmlFor="category" className="form-label">Category</label>
+                  <select className="form-select" id="category" name="category" value={product.category} onChange={handleChange} required>
+                    {availableCategories.map(cat => (
+                      <option key={cat.value} value={cat.value}>{cat.label}</option>
                     ))}
                   </select>
                 </div>
 
-                {/* Prescription Requirement for Medicines */}
                 {(product.category === 'medicines' || product.category === 'prescription') && (
                   <div className="mb-3">
                     <div className="card border-warning">
@@ -220,21 +343,10 @@ const AddProduct = () => {
                             <strong>This medicine requires a prescription</strong>
                           </label>
                         </div>
-                        <small className="text-muted d-block mt-2">
-                          If checked, users will be required to upload a valid prescription before purchasing this medicine.
-                          Our medical team will verify the prescription before approving the order.
-                        </small>
                       </div>
                     </div>
                   </div>
                 )}
-
-                <ImageUpload
-                  onImagesChange={setImages}
-                  onExpiryPhotoChange={setExpiryPhoto}
-                  existingImages={images}
-                  existingExpiryPhoto={expiryPhoto}
-                />
 
                 <div className="row mt-3">
                   <div className="col-md-6 mb-3">
@@ -246,17 +358,19 @@ const AddProduct = () => {
                     <input type="number" step="0.01" className="form-control" id="discountedPrice" name="discountedPrice" value={product.discountedPrice} onChange={handleChange} />
                   </div>
                 </div>
+
                 <div className="row">
                   <div className="col-md-6 mb-3">
                     <label htmlFor="stock" className="form-label">Stock Quantity</label>
                     <input type="number" className="form-control" id="stock" name="stock" value={product.stock} onChange={handleChange} required />
                   </div>
                   <div className="col-md-6 mb-3">
-                    <label htmlFor="expiryDate" className="form-label">Expiry Date</label>
-                    <input type="date" className="form-control" id="expiryDate" name="expiryDate" value={product.expiryDate} onChange={handleChange} required />
+                    <label htmlFor="expiryDate" className="form-label">Expiry Date <small className="text-muted">(Optional)</small></label>
+                    <input type="date" className="form-control" id="expiryDate" name="expiryDate" value={product.expiryDate} onChange={handleChange} />
                   </div>
                 </div>
-                <div className="d-grid mt-3">
+
+                <div className="d-grid mt-4">
                   <button type="submit" className="btn btn-success btn-lg" disabled={loading}>
                     {loading ? 'Saving...' : (isEditMode ? 'Save Changes' : 'Add Product')}
                   </button>

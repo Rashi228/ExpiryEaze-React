@@ -24,7 +24,7 @@ connectDB();
 
 // Middleware
 app.use(cors()); // Allow cross-origin requests
-// Increase body size limits to support image data strings and larger payloads
+// Keep increased body size limits for general image uploads (like expiry photos)
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
@@ -57,4 +57,4 @@ const PORT = process.env.PORT || 5001;
 
 app.listen(PORT, () => {
   console.log(`Backend server is running on http://localhost:${PORT}`);
-}); 
+});
