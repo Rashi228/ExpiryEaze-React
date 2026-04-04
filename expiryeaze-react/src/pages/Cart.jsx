@@ -77,7 +77,12 @@ const Cart = () => {
 
   const getPrescriptionForProduct = (productId) => {
     // We want the most recent prescription if multiple exist, but usually there's one active
-    return userPrescriptions.find(p => p.product === productId) || null;
+    return userPrescriptions.find(p => {
+      const pId = p.product?._id || p.product;
+      const targetId = productId?._id || productId;
+      if (!pId || !targetId) return false;
+      return String(pId) === String(targetId);
+    }) || null;
   };
 
   const handleCheckout = () => {
