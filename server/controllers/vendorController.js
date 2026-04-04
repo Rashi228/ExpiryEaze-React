@@ -133,7 +133,7 @@ exports.getMedicineVerificationStatus = async (req, res) => {
       message: isVerified ? "Vendor is verified for medicine sales" : "Vendor needs verification for medicine sales"
     });
   } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
+    res.status(500).json({ success: false, error: err.message || "Internal Server Error" });
   }
 };
 
@@ -162,6 +162,37 @@ exports.submitVerification = async (req, res) => {
       });
     }
 
+    const {
+      businessName, licenseNumber, pharmacyLicense, businessAddress,
+      contactPerson, phoneNumber, email, businessType, yearsInBusiness
+    } = req.body;
+
+    // Strict Validation
+    const requiredFields = [
+      'businessName', 'licenseNumber', 'pharmacyLicense', 'businessAddress',
+      'contactPerson', 'phoneNumber', 'email', 'businessType', 'yearsInBusiness'
+    ];
+
+    for (const field of requiredFields) {
+      if (!req.body[field] || String(req.body[field]).trim().length < 2) {
+        return res.status(400).json({ 
+          success: false, 
+          error: `Field '${field.replace(/([A-Z])/g, ' $1').toLowerCase()}' is required and must be at least 2 characters.` 
+        });
+      }
+    }
+
+    // Regex Validation for Email & Phone (Indian context for phone: 10 digits starting with 6-9)
+    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+    const phoneRegex = /^[6-9]\d{9}$/;
+
+    if (!emailRegex.test(email)) {
+      return res.status(400).json({ success: false, error: "Please provide a valid email address." });
+    }
+    if (!phoneRegex.test(phoneNumber)) {
+      return res.status(400).json({ success: false, error: "Please provide a valid 10-digit phone number." });
+    }
+
     const verificationPayload = {
       ...req.body,
       vendor: vendorId,
@@ -179,6 +210,6 @@ exports.submitVerification = async (req, res) => {
 
   } catch (err) {
     console.error(err);
-    res.status(500).json({ success: false, error: "Server Error" });
+    res.status(500).json({ success: false, error: "An unexpected error occurred while submitting your application." });
   }
 };
