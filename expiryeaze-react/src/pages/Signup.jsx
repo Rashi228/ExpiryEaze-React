@@ -3,18 +3,21 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 
 const Signup = () => {
-  const { signup, loading, error } = useAuth();
+  const { signup, error } = useAuth();
   const navigate = useNavigate();
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [role, setRole] = useState('user');
   const [message, setMessage] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setMessage('');
+    setIsSubmitting(true);
     const success = await signup(name, email, password, role);
+    setIsSubmitting(false);
     if (success) {
       setMessage('Signup successful! Please proceed to login.');
       setTimeout(() => navigate('/login'), 2000);
@@ -116,9 +119,9 @@ const Signup = () => {
                   <button
                     type="submit"
                     className="btn btn-success w-100 mb-3"
-                    disabled={loading}
+                    disabled={isSubmitting}
                   >
-                    {loading ? (
+                    {isSubmitting ? (
                       <>
                         <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
                         Creating Account...

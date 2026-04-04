@@ -3,14 +3,17 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 
 const Login = () => {
-  const { login, loading, error } = useAuth();
+  const { login, error } = useAuth();
   const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setIsSubmitting(true);
     const success = await login(email, password);
+    setIsSubmitting(false);
     if (success) {
       navigate('/user-dashboard'); // Or wherever you want to redirect after login
     }
@@ -77,9 +80,9 @@ const Login = () => {
                   <button
                     type="submit"
                     className="btn btn-success w-100 mb-3"
-                    disabled={loading}
+                    disabled={isSubmitting}
                   >
-                    {loading ? (
+                    {isSubmitting ? (
                       <>
                         <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
                         Signing In...
