@@ -14,8 +14,8 @@ const ChefFloatingButton = () => {
   }
 
   return (
-    <div 
-      className="chef-floating-container" 
+    <div
+      className="chef-floating-container"
       onClick={() => navigate('/my-items')}
     >
       <div className="chef-tooltip shadow-sm">Meet Your AI Chef!</div>

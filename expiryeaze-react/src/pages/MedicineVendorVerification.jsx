@@ -51,12 +51,27 @@ const MedicineVendorVerification = () => {
       'insuranceProvider','insurancePolicyNumber','complianceOfficer','emergencyContact'
     ];
     for (const key of required) {
-      if (!String(formData[key] || '').trim()) {
-        setError('Please fill all required fields marked with *');
+      const val = String(formData[key] || '').trim();
+      if (!val) {
+        setError(`Please fill required field: ${key.replace(/([A-Z])/g, ' $1').toLowerCase()}`);
+        setIsSubmitting(false);
+        return;
+      }
+      if (val.length < 3 && key !== 'yearsInBusiness') {
+        setError(`${key.replace(/([A-Z])/g, ' $1').toLowerCase()} is too short.`);
         setIsSubmitting(false);
         return;
       }
     }
+
+    // Phone validation (10 digits)
+    const phoneRegex = /^[6-9]\d{9}$/;
+    if (!phoneRegex.test(formData.phoneNumber)) {
+      setError('Please enter a valid 10-digit phone number.');
+      setIsSubmitting(false);
+      return;
+    }
+
     if (!formData.termsAccepted) {
       setError('You must accept the Terms and Privacy Policy');
       setIsSubmitting(false);
@@ -64,7 +79,12 @@ const MedicineVendorVerification = () => {
     }
 
     try {
-      const res = await axios.post(`${config.API_URL}/vendors/verify`, formData);
+      const token = localStorage.getItem('token');
+      const res = await axios.post(`${config.API_URL}/vendors/verify`, formData, {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
       if (res.data?.success) {
         setSuccess(true);
         setTimeout(() => navigate('/medicines-dashboard'), 2000);
@@ -243,8 +263,8 @@ const MedicineVendorVerification = () => {
                       value={formData.email}
                       onChange={handleInputChange}
                       required
-                      pattern="^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9][a-zA-Z0-9.-]*[a-zA-Z0-9]\.[a-zA-Z]{2,}$"
-                      title="Please enter a valid email address with proper domain (e.g., user@example.com). Domain must have a top-level domain like .com, .org, etc."
+                      pattern="[a-z0-9._%+\-]+@[a-z0-9.\-]+\.[a-z]{2,}$"
+                      title="Please enter a valid email address."
                     />
                   </div>
                   <div className="col-md-6 mb-3">
