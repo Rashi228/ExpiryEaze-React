@@ -53,7 +53,7 @@ export const OrderProvider = ({ children }) => {
     }
   };
 
-  const fetchOrders = async () => {
+  const fetchOrders = React.useCallback(async () => {
     if (!user) return;
     setLoading(true);
     try {
@@ -66,7 +66,7 @@ export const OrderProvider = ({ children }) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [user, API_URL]);
 
   return (
     <OrderContext.Provider value={{ orders, loading, error, placeOrder, fetchOrders }}>
