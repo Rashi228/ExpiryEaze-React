@@ -5,7 +5,9 @@ const {
   getMedicineVerifications,
   approveMedicineVerification,
   rejectMedicineVerification,
-  getAdminStats
+  getAdminStats,
+  getAllOrders,
+  updateOrderStatus
 } = require('../controllers/adminController');
 
 // All admin routes must be protected by auth and admin role
@@ -15,5 +17,8 @@ router.get('/stats', getAdminStats);
 router.get('/medicine-verifications', getMedicineVerifications);
 router.put('/medicine-verifications/:id/approve', approveMedicineVerification);
 router.put('/medicine-verifications/:id/reject', rejectMedicineVerification);
+
+router.get('/orders', getAllOrders);
+router.put('/orders/:id/status', updateOrderStatus);
 
 module.exports = router;
