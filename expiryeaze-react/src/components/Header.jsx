@@ -212,6 +212,14 @@ const Header = () => {
                 </button>
                 {dropdownOpen && (
                   <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-10">
+                    <Link
+                      to="/order-history"
+                      className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                      onClick={() => setDropdownOpen(false)}
+                    >
+                      <i className="fas fa-box h-4 w-4 mr-2"></i>
+                      Order History
+                    </Link>
                     <button
                       onClick={handleLogout}
                       className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
@@ -300,16 +308,26 @@ const Header = () => {
             )}
 
             {user ? (
-              <button
-                onClick={() => {
-                  handleLogout();
-                  setIsOpen(false);
-                }}
-                className="flex items-center w-full py-2 px-4 font-bold text-gray-700 hover:text-success hover:bg-success-light rounded-full"
-              >
+              <>
+                <Link
+                  to="/order-history"
+                  className="flex items-center w-full py-2 px-4 font-bold text-gray-700 hover:text-success hover:bg-success-light rounded-full"
+                  onClick={() => setIsOpen(false)}
+                >
+                  <i className="fas fa-box h-5 w-5 mr-2"></i>
+                  Order History
+                </Link>
+                <button
+                  onClick={() => {
+                    handleLogout();
+                    setIsOpen(false);
+                  }}
+                  className="flex items-center w-full py-2 px-4 font-bold text-gray-700 hover:text-success hover:bg-success-light rounded-full"
+                >
                 <i className="fas fa-sign-out-alt h-5 w-5 mr-2"></i>
                 Sign out
               </button>
+              </>
             ) : (
               <Link
                 to="/login"

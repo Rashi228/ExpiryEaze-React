@@ -151,7 +151,7 @@ const Checkout = () => {
     setPaying(true);
     const result = await handlePayment(amountInPaise, {
       name: 'ExpiryEaze',
-      description: 'Order payment',
+      description: 'Order payment (Test Mode)',
       prefill: { email: user?.email || '', name: user?.name || '' },
     });
     setPaying(false);

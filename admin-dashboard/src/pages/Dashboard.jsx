@@ -187,9 +187,14 @@ const Dashboard = () => {
         <div className="navbar-brand fw-bold fs-4 d-flex align-items-center" style={{ color: '#38bdf8' }}>
           <i className="fas fa-satellite-dish me-2 fs-3 text-info"></i> EXPIRYAZE <span className="ms-2 fw-light opacity-50 text-white">| Command Center</span>
         </div>
-        <button onClick={handleLogout} className="btn btn-outline-info rounded-pill px-4 fw-bold shadow-sm" style={{ border: '2px solid' }}>
-          Initialize Shutdown <i className="fas fa-power-off ms-2"></i>
-        </button>
+        <div className="d-flex gap-3">
+          <button onClick={() => navigate('/orders')} className="btn btn-info rounded-pill px-4 fw-bold shadow-sm text-dark">
+            <i className="fas fa-truck-loading me-2"></i> Orders Logistics
+          </button>
+          <button onClick={handleLogout} className="btn btn-outline-danger rounded-pill px-4 fw-bold shadow-sm">
+            <i className="fas fa-power-off"></i>
+          </button>
+        </div>
       </nav>
 
       <div className="container-fluid px-5 pt-5">

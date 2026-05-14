@@ -160,3 +160,55 @@ exports.getAdminStats = async (req, res) => {
     res.status(500).json({ success: false, error: err.message });
   }
 };
+
+// @desc      Get all global orders
+// @route     GET /api/v1/admin/orders
+// @access    Private (Admin only)
+exports.getAllOrders = async (req, res) => {
+  try {
+    const orders = await Order.find()
+      .populate('user', 'name email profileImage')
+      .populate('products.product', 'name category expiryDate')
+      .sort('-createdAt');
+
+    res.status(200).json({
+      success: true,
+      count: orders.length,
+      data: orders
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+};
+
+// @desc      Update an order status
+// @route     PUT /api/v1/admin/orders/:id/status
+// @access    Private (Admin only)
+exports.updateOrderStatus = async (req, res) => {
+  try {
+    const { status } = req.body;
+    
+    // Ensure valid status
+    const validStatuses = ['Pending', 'Pending Prescription', 'In Progress', 'Shipped', 'Delivered', 'Cancelled'];
+    if (!validStatuses.includes(status)) {
+      return res.status(400).json({ success: false, error: 'Invalid status provided' });
+    }
+
+    const order = await Order.findById(req.params.id);
+
+    if (!order) {
+      return res.status(404).json({ success: false, error: 'Order not found' });
+    }
+
+    order.status = status;
+    await order.save();
+
+    res.status(200).json({
+      success: true,
+      message: 'Order status updated successfully',
+      data: order
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+};

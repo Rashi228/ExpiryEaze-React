@@ -33,6 +33,7 @@ import Dashboard from './pages/Dashboard';
 import TestPage from './pages/TestPage';
 import AddProduct from './pages/AddProduct';
 import MyItemsPage from './pages/MyItemsPage';
+import OrderHistory from './pages/OrderHistory';
 
 function App() {
   return (
@@ -73,6 +74,7 @@ function App() {
                     <Route path="/add-product" element={<AddProduct />} />
                     <Route path="/edit-product/:id" element={<AddProduct />} />
                     <Route path="/my-items" element={<MyItemsPage />} />
+                    <Route path="/order-history" element={<OrderHistory />} />
                   </Routes>
                 </main>
                 <Footer />
